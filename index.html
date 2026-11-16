@@ -308,8 +308,17 @@
       <!-- Floating Apple Pencil Double-Tap Tool Switch HUD -->
       <div id="pencil-hud" class="opacity-0 fixed top-24 left-1/2 -translate-x-1/2 bg-slate-900/90 text-white px-3.5 py-1.5 rounded-full shadow-xl border border-white/15 text-xs font-semibold flex items-center gap-2 z-50">
         <span id="pencil-hud-icon">🧹</span>
-        <span id="pencil-hud-text">Apple Pencil 點兩下：已切換至橡皮擦</span>
+        <span id="pencil-hud-text">點兩下快切：已切換至橡皮擦</span>
       </div>
+
+      <!-- Floating Quick Eraser / Pen Switcher Pill (Draggable & 1-Tap for Thumb or Pencil) -->
+      <button id="floating-eraser-fab" type="button"
+        class="fixed bottom-6 right-5 z-40 px-3.5 py-2 rounded-full shadow-2xl border border-white/20 bg-slate-900/90 backdrop-blur text-white text-xs font-semibold flex items-center gap-2 active:scale-95 transition-transform"
+        style="touch-action: none;"
+        title="輕點一下立即切換「畫筆 ↔ 橡皮擦」（可按住拖曳位置；也可直接用筆尖或單指在紙上點兩下切換！）">
+        <span id="fab-tool-icon" class="text-base">🧹</span>
+        <span id="fab-tool-label">點此切橡皮擦 (或紙上點2下)</span>
+      </button>
 
       <!-- Live Toast Banner -->
       <div id="toast-banner" class="hidden fixed bottom-4 right-4 left-4 sm:left-auto sm:max-w-sm bg-[var(--card)] border border-[var(--border)] shadow-xl rounded-xl p-3 z-50 flex items-start gap-2.5 text-xs">
@@ -479,6 +488,10 @@
       lastPencilTapTime: 0,
       lastPencilTapPos: { x: 0, y: 0 },
       lastPencilStrokeId: null,
+      lastTouchTapTime: 0,
+      lastTouchTapPos: { x: 0, y: 0 },
+      touchDownPos: { x: 0, y: 0 },
+      touchDownTime: 0,
       pointerDownPos: { x: 0, y: 0 },
       pointerDownTime: 0,
       isDrawing: false,
@@ -1263,7 +1276,7 @@
     /***********************************************************************
      * APPLE PENCIL DOUBLE-TAP ERASER SWITCHER
      ***********************************************************************/
-    function selectTool(toolName, fromDoubleTap = false) {
+    function selectTool(toolName, fromDoubleTap = false, triggerSource = '快切手勢') {
       if (toolName === 'pen' || toolName === 'highlighter') {
         state.previousDrawTool = toolName;
       }
@@ -1277,20 +1290,36 @@
         activeBtn.className = 'tool-btn active px-2 py-1 rounded-lg text-xs font-medium bg-[var(--primary)] text-[var(--primary-foreground)] flex items-center gap-1';
       }
 
+      // Sync Floating Quick-Switch Pill UI
+      const fab = document.getElementById('floating-eraser-fab');
+      const fabIcon = document.getElementById('fab-tool-icon');
+      const fabLabel = document.getElementById('fab-tool-label');
+      if (fab && fabIcon && fabLabel) {
+        if (toolName === 'eraser') {
+          fab.className = 'fixed bottom-6 right-5 z-40 px-3.5 py-2 rounded-full shadow-2xl border border-amber-300/60 bg-amber-500 text-slate-950 text-xs font-bold flex items-center gap-2 active:scale-95 transition-transform';
+          fabIcon.textContent = '🧹';
+          fabLabel.textContent = '橡皮擦中 (點此或紙上點2下回畫筆)';
+        } else {
+          fab.className = 'fixed bottom-6 right-5 z-40 px-3.5 py-2 rounded-full shadow-2xl border border-white/20 bg-slate-900/90 backdrop-blur text-white text-xs font-semibold flex items-center gap-2 active:scale-95 transition-transform';
+          fabIcon.textContent = toolName === 'highlighter' ? '🖍️' : '✒️';
+          fabLabel.textContent = '點此切橡皮擦 (或紙上點2下)';
+        }
+      }
+
       if (fromDoubleTap) {
         const labelMap = {
-          eraser: ['🧹', 'Apple Pencil 點兩下：已切換至「橡皮擦」'],
-          pen: ['✒️', 'Apple Pencil 點兩下：已切回「鋼筆」'],
-          highlighter: ['🖍️', 'Apple Pencil 點兩下：已切回「螢光筆」']
+          eraser: ['🧹', `${triggerSource}：已切換至「橡皮擦」`],
+          pen: ['✒️', `${triggerSource}：已切回「鋼筆」`],
+          highlighter: ['🖍️', `${triggerSource}：已切回「螢光筆」`]
         };
         const [icon, msg] = labelMap[toolName] || ['✨', `已切換工具：${toolName}`];
         showPencilHud(icon, msg);
       }
     }
 
-    function togglePencilEraserDoubleTap() {
+    function togglePencilEraserDoubleTap(triggerSource = '點兩下快切') {
       const targetTool = state.currentTool === 'eraser' ? (state.previousDrawTool || 'pen') : 'eraser';
-      selectTool(targetTool, true);
+      selectTool(targetTool, true, triggerSource);
     }
 
     window.addEventListener('keydown', (e) => {
@@ -1844,40 +1873,60 @@
       };
     }
 
+    function getStrokeBoundingSpan(stroke) {
+      if (!stroke || !stroke.points || stroke.points.length === 0) return 0;
+      let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+      for (const p of stroke.points) {
+        if (p.x < minX) minX = p.x;
+        if (p.y < minY) minY = p.y;
+        if (p.x > maxX) maxX = p.x;
+        if (p.y > maxY) maxY = p.y;
+      }
+      return Math.hypot(maxX - minX, maxY - minY);
+    }
+
     inkCanvas.addEventListener('pointerdown', (e) => {
       e.preventDefault();
       inkCanvas.setPointerCapture(e.pointerId);
 
       const hwBadge = document.getElementById('hardware-detect-badge');
       if (e.pointerType === 'pen') {
-        hwBadge.textContent = '✒️ 已偵測到 Apple Pencil：書寫中（手指自動鎖定為滑動/縮放）';
+        hwBadge.textContent = '✒️ Apple Pencil 書寫中（筆尖點紙2下 或 單指點2下 = 秒切橡皮擦）';
       } else if (e.pointerType === 'touch') {
         hwBadge.textContent = state.fingerAlwaysPan
-          ? '🖐️ 已偵測到手指觸控：自動進入滑動與雙指縮放模式'
-          : '👆 已偵測到手指觸控：目前允許手指寫字（雙指可縮放）';
+          ? '🖐️ 手指觸控：單指滑動 / 雙指縮放 / 單指輕點2下=切橡皮擦'
+          : '👆 手指觸控：目前允許手指寫字（雙指可縮放）';
       }
 
       if (e.pointerType === 'pen' && (e.button === 5 || (e.buttons & 32))) {
-        togglePencilEraserDoubleTap();
+        togglePencilEraserDoubleTap('筆身側鍵');
+        return;
       }
 
       const pt = getCanvasCoords(e);
       const now = Date.now();
 
+      // 1. Apple Pencil Tip (or Mouse) Double-Tap on Canvas -> Toggle Eraser & clean up 1st tap dot
       if (e.pointerType === 'pen' || e.pointerType === 'mouse') {
         const dt = now - state.lastPencilTapTime;
         const dist = Math.hypot(pt.x - state.lastPencilTapPos.x, pt.y - state.lastPencilTapPos.y);
-        if (dt > 35 && dt < 330 && dist < 14) {
+        if (dt >= 15 && dt < 480 && dist < 42) {
           const note = getActiveNote();
           const page = note.pages[state.currentPageIndex];
           if (state.lastPencilStrokeId && page.strokes[state.lastPencilStrokeId]) {
             const prevStroke = page.strokes[state.lastPencilStrokeId];
-            if (prevStroke.points.length <= 4) {
+            if (getStrokeBoundingSpan(prevStroke) <= 24) {
               delete page.strokes[state.lastPencilStrokeId];
+              if (state.undoStack.length > 0 && state.undoStack[state.undoStack.length - 1].id === state.lastPencilStrokeId) {
+                state.undoStack.pop();
+              }
+              commitActiveNoteChange();
             }
           }
           state.lastPencilTapTime = 0;
-          togglePencilEraserDoubleTap();
+          state.lastPencilStrokeId = null;
+          cancelActiveDrawing();
+          togglePencilEraserDoubleTap('✒️ 筆尖點紙兩下');
           renderActivePage();
           return;
         }
@@ -1889,9 +1938,15 @@
       if (e.pointerType === 'touch') {
         state.activePointers.set(e.pointerId, { clientX: e.clientX, clientY: e.clientY });
 
+        if (state.activePointers.size === 1) {
+          state.touchDownPos = { x: e.clientX, y: e.clientY };
+          state.touchDownTime = now;
+        }
+
         if (state.activePointers.size >= 2) {
           cancelActiveDrawing();
           state.isPinchingOrPanning = true;
+          state.lastTouchTapTime = 0;
           const metrics = getTwoFingerMetrics();
           if (metrics) {
             state.pinchStartDist = metrics.dist;
@@ -1992,7 +2047,26 @@
 
     function handlePointerEnd(e) {
       if (e.pointerType === 'touch') {
+        const wasSingleTouch = state.activePointers.size === 1;
         state.activePointers.delete(e.pointerId);
+
+        if (wasSingleTouch && state.fingerAlwaysPan) {
+          const now = Date.now();
+          const touchDuration = now - state.touchDownTime;
+          const touchMoveDist = Math.hypot(e.clientX - state.touchDownPos.x, e.clientY - state.touchDownPos.y);
+          if (touchDuration < 260 && touchMoveDist < 16) {
+            const dt = now - state.lastTouchTapTime;
+            const distFromLastTap = Math.hypot(e.clientX - state.lastTouchTapPos.x, e.clientY - state.lastTouchTapPos.y);
+            if (dt >= 25 && dt < 420 && distFromLastTap < 45) {
+              state.lastTouchTapTime = 0;
+              togglePencilEraserDoubleTap('🖐️ 單指點兩下');
+            } else {
+              state.lastTouchTapTime = now;
+              state.lastTouchTapPos = { x: e.clientX, y: e.clientY };
+            }
+          }
+        }
+
         if (state.activePointers.size === 0) {
           state.isPinchingOrPanning = false;
           state.panLastCenter = null;
@@ -2007,7 +2081,7 @@
         const pt = getCanvasCoords(e);
         const pressDuration = Date.now() - state.pointerDownTime;
         const moveDist = Math.hypot(pt.x - state.pointerDownPos.x, pt.y - state.pointerDownPos.y);
-        if (pressDuration < 220 && moveDist < 10) {
+        if (pressDuration < 280 && moveDist < 22) {
           state.lastPencilTapTime = Date.now();
           state.lastPencilTapPos = pt;
         }
@@ -2243,6 +2317,53 @@
     document.querySelectorAll('[data-tool]').forEach(btn => {
       btn.addEventListener('click', () => selectTool(btn.dataset.tool, false));
     });
+
+    // Floating Quick Eraser / Pen Switcher Pill (1-Tap Toggle + Drag anywhere on screen)
+    (() => {
+      const fab = document.getElementById('floating-eraser-fab');
+      if (!fab) return;
+      let isDraggingFab = false;
+      let fabMoved = false;
+      let startX = 0, startY = 0, origLeft = 0, origTop = 0;
+
+      fab.addEventListener('pointerdown', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        fab.setPointerCapture(e.pointerId);
+        isDraggingFab = true;
+        fabMoved = false;
+        const rect = fab.getBoundingClientRect();
+        startX = e.clientX;
+        startY = e.clientY;
+        origLeft = rect.left;
+        origTop = rect.top;
+      });
+
+      fab.addEventListener('pointermove', (e) => {
+        if (!isDraggingFab) return;
+        const dx = e.clientX - startX;
+        const dy = e.clientY - startY;
+        if (Math.hypot(dx, dy) > 8) {
+          fabMoved = true;
+          const nextLeft = Math.max(8, Math.min(window.innerWidth - fab.offsetWidth - 8, origLeft + dx));
+          const nextTop = Math.max(54, Math.min(window.innerHeight - fab.offsetHeight - 8, origTop + dy));
+          fab.style.right = 'auto';
+          fab.style.bottom = 'auto';
+          fab.style.left = `${nextLeft}px`;
+          fab.style.top = `${nextTop}px`;
+        }
+      });
+
+      const endFab = (e) => {
+        if (!isDraggingFab) return;
+        isDraggingFab = false;
+        if (!fabMoved) {
+          togglePencilEraserDoubleTap('⚡ 懸浮快切鍵');
+        }
+      };
+      fab.addEventListener('pointerup', endFab);
+      fab.addEventListener('pointercancel', endFab);
+    })();
 
     document.getElementById('btn-finger-mode').addEventListener('click', () => {
       state.fingerAlwaysPan = !state.fingerAlwaysPan;
