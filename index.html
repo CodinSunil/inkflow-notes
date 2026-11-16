@@ -1,0 +1,2382 @@
+<!DOCTYPE html>
+<html lang="zh-Hant"><head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="InkFlow 筆記">
+  <link rel="manifest" href="data:application/manifest+json,{&quot;name&quot;:&quot;InkFlow Notes&quot;,&quot;short_name&quot;:&quot;InkFlow&quot;,&quot;start_url&quot;:&quot;.&quot;,&quot;display&quot;:&quot;standalone&quot;,&quot;background_color&quot;:&quot;#0f172a&quot;,&quot;theme_color&quot;:&quot;#0f172a&quot;}">
+  <title>InkFlow Notes — iPad &amp; iPhone 手寫同步筆記</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
+  <style>
+    :root {
+      --background: #0f172a;
+      --foreground: #f8fafc;
+      --card: #1e293b;
+      --card-border: #334155;
+      --secondary: #334155;
+      --border: #334155;
+      --primary: #2563eb;
+      --primary-foreground: #ffffff;
+      --muted-foreground: #94a3b8;
+      --code-foreground: #38bdf8;
+      --link: #60a5fa;
+    }
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      overscroll-behavior: none;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "PingFang TC", "Helvetica Neue", sans-serif;
+    }
+    ::-webkit-scrollbar {
+      width: 5px;
+      height: 5px;
+    }
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(148, 163, 184, 0.35);
+      border-radius: 9999px;
+    }
+    .paper-sheet {
+      background-color: #FDFBF7;
+      box-shadow:
+        0 10px 30px -5px rgba(15, 23, 42, 0.22),
+        0 2px 6px -1px rgba(15, 23, 42, 0.1),
+        inset 0 0 0 1px rgba(180, 168, 145, 0.28);
+      transform-origin: top left;
+    }
+    .tool-btn {
+      transition: all 0.15s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+    .tool-btn.active {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px -2px rgba(37, 99, 235, 0.4);
+    }
+    .color-dot {
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+    .color-dot.active {
+      transform: scale(1.2);
+      box-shadow: 0 0 0 2px #ffffff, 0 0 0 4px #2563eb;
+    }
+    #notebook-sidebar {
+      transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1), margin-left 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+    #notebook-sidebar.collapsed-desktop {
+      margin-left: -18rem;
+    }
+    #notebook-sidebar.collapsed-mobile {
+      transform: translateX(-105%);
+    }
+    #pencil-hud {
+      pointer-events: none;
+      transition: opacity 0.18s ease, transform 0.18s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+    canvas {
+      touch-action: none;
+    }
+  </style>
+<style>*, ::before, ::after{--tw-border-spacing-x:0;--tw-border-spacing-y:0;--tw-translate-x:0;--tw-translate-y:0;--tw-rotate:0;--tw-skew-x:0;--tw-skew-y:0;--tw-scale-x:1;--tw-scale-y:1;--tw-pan-x: ;--tw-pan-y: ;--tw-pinch-zoom: ;--tw-scroll-snap-strictness:proximity;--tw-gradient-from-position: ;--tw-gradient-via-position: ;--tw-gradient-to-position: ;--tw-ordinal: ;--tw-slashed-zero: ;--tw-numeric-figure: ;--tw-numeric-spacing: ;--tw-numeric-fraction: ;--tw-ring-inset: ;--tw-ring-offset-width:0px;--tw-ring-offset-color:#fff;--tw-ring-color:rgb(59 130 246 / 0.5);--tw-ring-offset-shadow:0 0 #0000;--tw-ring-shadow:0 0 #0000;--tw-shadow:0 0 #0000;--tw-shadow-colored:0 0 #0000;--tw-blur: ;--tw-brightness: ;--tw-contrast: ;--tw-grayscale: ;--tw-hue-rotate: ;--tw-invert: ;--tw-saturate: ;--tw-sepia: ;--tw-drop-shadow: ;--tw-backdrop-blur: ;--tw-backdrop-brightness: ;--tw-backdrop-contrast: ;--tw-backdrop-grayscale: ;--tw-backdrop-hue-rotate: ;--tw-backdrop-invert: ;--tw-backdrop-opacity: ;--tw-backdrop-saturate: ;--tw-backdrop-sepia: ;--tw-contain-size: ;--tw-contain-layout: ;--tw-contain-paint: ;--tw-contain-style: }::backdrop{--tw-border-spacing-x:0;--tw-border-spacing-y:0;--tw-translate-x:0;--tw-translate-y:0;--tw-rotate:0;--tw-skew-x:0;--tw-skew-y:0;--tw-scale-x:1;--tw-scale-y:1;--tw-pan-x: ;--tw-pan-y: ;--tw-pinch-zoom: ;--tw-scroll-snap-strictness:proximity;--tw-gradient-from-position: ;--tw-gradient-via-position: ;--tw-gradient-to-position: ;--tw-ordinal: ;--tw-slashed-zero: ;--tw-numeric-figure: ;--tw-numeric-spacing: ;--tw-numeric-fraction: ;--tw-ring-inset: ;--tw-ring-offset-width:0px;--tw-ring-offset-color:#fff;--tw-ring-color:rgb(59 130 246 / 0.5);--tw-ring-offset-shadow:0 0 #0000;--tw-ring-shadow:0 0 #0000;--tw-shadow:0 0 #0000;--tw-shadow-colored:0 0 #0000;--tw-blur: ;--tw-brightness: ;--tw-contrast: ;--tw-grayscale: ;--tw-hue-rotate: ;--tw-invert: ;--tw-saturate: ;--tw-sepia: ;--tw-drop-shadow: ;--tw-backdrop-blur: ;--tw-backdrop-brightness: ;--tw-backdrop-contrast: ;--tw-backdrop-grayscale: ;--tw-backdrop-hue-rotate: ;--tw-backdrop-invert: ;--tw-backdrop-opacity: ;--tw-backdrop-saturate: ;--tw-backdrop-sepia: ;--tw-contain-size: ;--tw-contain-layout: ;--tw-contain-paint: ;--tw-contain-style: }/* ! tailwindcss v3.4.17 | MIT License | https://tailwindcss.com */*,::after,::before{box-sizing:border-box;border-width:0;border-style:solid;border-color:#e5e7eb}::after,::before{--tw-content:''}:host,html{line-height:1.5;-webkit-text-size-adjust:100%;-moz-tab-size:4;tab-size:4;font-family:ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";font-feature-settings:normal;font-variation-settings:normal;-webkit-tap-highlight-color:transparent}body{margin:0;line-height:inherit}hr{height:0;color:inherit;border-top-width:1px}abbr:where([title]){-webkit-text-decoration:underline dotted;text-decoration:underline dotted}h1,h2,h3,h4,h5,h6{font-size:inherit;font-weight:inherit}a{color:inherit;text-decoration:inherit}b,strong{font-weight:bolder}code,kbd,pre,samp{font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;font-feature-settings:normal;font-variation-settings:normal;font-size:1em}small{font-size:80%}sub,sup{font-size:75%;line-height:0;position:relative;vertical-align:baseline}sub{bottom:-.25em}sup{top:-.5em}table{text-indent:0;border-color:inherit;border-collapse:collapse}button,input,optgroup,select,textarea{font-family:inherit;font-feature-settings:inherit;font-variation-settings:inherit;font-size:100%;font-weight:inherit;line-height:inherit;letter-spacing:inherit;color:inherit;margin:0;padding:0}button,select{text-transform:none}button,input:where([type=button]),input:where([type=reset]),input:where([type=submit]){-webkit-appearance:button;background-color:transparent;background-image:none}:-moz-focusring{outline:auto}:-moz-ui-invalid{box-shadow:none}progress{vertical-align:baseline}::-webkit-inner-spin-button,::-webkit-outer-spin-button{height:auto}[type=search]{-webkit-appearance:textfield;outline-offset:-2px}::-webkit-search-decoration{-webkit-appearance:none}::-webkit-file-upload-button{-webkit-appearance:button;font:inherit}summary{display:list-item}blockquote,dd,dl,figure,h1,h2,h3,h4,h5,h6,hr,p,pre{margin:0}fieldset{margin:0;padding:0}legend{padding:0}menu,ol,ul{list-style:none;margin:0;padding:0}dialog{padding:0}textarea{resize:vertical}input::placeholder,textarea::placeholder{opacity:1;color:#9ca3af}[role=button],button{cursor:pointer}:disabled{cursor:default}audio,canvas,embed,iframe,img,object,svg,video{display:block;vertical-align:middle}img,video{max-width:100%;height:auto}[hidden]:where(:not([hidden=until-found])){display:none}.pointer-events-none{pointer-events:none}.fixed{position:fixed}.absolute{position:absolute}.relative{position:relative}.inset-0{inset:0px}.inset-y-0{top:0px;bottom:0px}.bottom-4{bottom:1rem}.left-0{left:0px}.left-1\/2{left:50%}.left-4{left:1rem}.right-4{right:1rem}.top-24{top:6rem}.z-20{z-index:20}.z-30{z-index:30}.z-40{z-index:40}.z-50{z-index:50}.mx-0\.5{margin-left:0.125rem;margin-right:0.125rem}.mb-1\.5{margin-bottom:0.375rem}.mb-2{margin-bottom:0.5rem}.mt-0\.5{margin-top:0.125rem}.mt-1\.5{margin-top:0.375rem}.flex{display:flex}.grid{display:grid}.hidden{display:none}.h-1\.5{height:0.375rem}.h-11{height:2.75rem}.h-2{height:0.5rem}.h-2\.5{height:0.625rem}.h-28{height:7rem}.h-3\.5{height:0.875rem}.h-4{height:1rem}.h-7{height:1.75rem}.h-screen{height:100vh}.max-h-\[90vh\]{max-height:90vh}.w-1\.5{width:0.375rem}.w-2{width:0.5rem}.w-2\.5{width:0.625rem}.w-3\.5{width:0.875rem}.w-4{width:1rem}.w-7{width:1.75rem}.w-72{width:18rem}.w-\[1px\]{width:1px}.w-full{width:100%}.w-screen{width:100vw}.min-w-0{min-width:0px}.max-w-2xl{max-width:42rem}.max-w-\[130px\]{max-width:130px}.flex-1{flex:1 1 0%}.shrink-0{flex-shrink:0}.-translate-x-1\/2{--tw-translate-x:-50%;transform:translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y))}.cursor-crosshair{cursor:crosshair}.cursor-pointer{cursor:pointer}.grid-cols-1{grid-template-columns:repeat(1, minmax(0, 1fr))}.flex-col{flex-direction:column}.flex-wrap{flex-wrap:wrap}.items-start{align-items:flex-start}.items-center{align-items:center}.justify-center{justify-content:center}.justify-between{justify-content:space-between}.gap-0\.5{gap:0.125rem}.gap-1{gap:0.25rem}.gap-1\.5{gap:0.375rem}.gap-2{gap:0.5rem}.gap-2\.5{gap:0.625rem}.gap-3{gap:0.75rem}.space-y-1 > :not([hidden]) ~ :not([hidden]){--tw-space-y-reverse:0;margin-top:calc(0.25rem * calc(1 - var(--tw-space-y-reverse)));margin-bottom:calc(0.25rem * var(--tw-space-y-reverse))}.space-y-1\.5 > :not([hidden]) ~ :not([hidden]){--tw-space-y-reverse:0;margin-top:calc(0.375rem * calc(1 - var(--tw-space-y-reverse)));margin-bottom:calc(0.375rem * var(--tw-space-y-reverse))}.space-y-2 > :not([hidden]) ~ :not([hidden]){--tw-space-y-reverse:0;margin-top:calc(0.5rem * calc(1 - var(--tw-space-y-reverse)));margin-bottom:calc(0.5rem * var(--tw-space-y-reverse))}.space-y-3 > :not([hidden]) ~ :not([hidden]){--tw-space-y-reverse:0;margin-top:calc(0.75rem * calc(1 - var(--tw-space-y-reverse)));margin-bottom:calc(0.75rem * var(--tw-space-y-reverse))}.space-y-4 > :not([hidden]) ~ :not([hidden]){--tw-space-y-reverse:0;margin-top:calc(1rem * calc(1 - var(--tw-space-y-reverse)));margin-bottom:calc(1rem * var(--tw-space-y-reverse))}.overflow-auto{overflow:auto}.overflow-hidden{overflow:hidden}.overflow-x-auto{overflow-x:auto}.overflow-y-auto{overflow-y:auto}.truncate{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.rounded{border-radius:0.25rem}.rounded-2xl{border-radius:1rem}.rounded-full{border-radius:9999px}.rounded-lg{border-radius:0.5rem}.rounded-md{border-radius:0.375rem}.rounded-xl{border-radius:0.75rem}.border{border-width:1px}.border-b{border-bottom-width:1px}.border-r{border-right-width:1px}.border-t{border-top-width:1px}.border-\[var\(--border\)\]{border-color:var(--border)}.border-amber-400{--tw-border-opacity:1;border-color:rgb(251 191 36 / var(--tw-border-opacity, 1))}.border-amber-500\/25{border-color:rgb(245 158 11 / 0.25)}.border-amber-500\/30{border-color:rgb(245 158 11 / 0.3)}.border-emerald-500\/30{border-color:rgb(16 185 129 / 0.3)}.border-emerald-500\/40{border-color:rgb(16 185 129 / 0.4)}.border-indigo-500\/30{border-color:rgb(99 102 241 / 0.3)}.border-white\/15{border-color:rgb(255 255 255 / 0.15)}.border-\[var\(--primary\)\]{border-color:var(--primary)}.border-transparent{border-color:transparent}.bg-\[\#059669\]{--tw-bg-opacity:1;background-color:rgb(5 150 105 / var(--tw-bg-opacity, 1))}.bg-\[\#1D4ED8\]{--tw-bg-opacity:1;background-color:rgb(29 78 216 / var(--tw-bg-opacity, 1))}.bg-\[\#1E293B\]{--tw-bg-opacity:1;background-color:rgb(30 41 59 / var(--tw-bg-opacity, 1))}.bg-\[\#DC2626\]{--tw-bg-opacity:1;background-color:rgb(220 38 38 / var(--tw-bg-opacity, 1))}.bg-\[\#FACC15\]{--tw-bg-opacity:1;background-color:rgb(250 204 21 / var(--tw-bg-opacity, 1))}.bg-\[var\(--background\)\]{background-color:var(--background)}.bg-\[var\(--border\)\]{background-color:var(--border)}.bg-\[var\(--card\)\]{background-color:var(--card)}.bg-\[var\(--foreground\)\]{background-color:var(--foreground)}.bg-\[var\(--primary\)\]{background-color:var(--primary)}.bg-\[var\(--secondary\)\]{background-color:var(--secondary)}.bg-amber-300{--tw-bg-opacity:1;background-color:rgb(252 211 77 / var(--tw-bg-opacity, 1))}.bg-amber-500{--tw-bg-opacity:1;background-color:rgb(245 158 11 / var(--tw-bg-opacity, 1))}.bg-amber-500\/10{background-color:rgb(245 158 11 / 0.1)}.bg-amber-500\/15{background-color:rgb(245 158 11 / 0.15)}.bg-amber-500\/20{background-color:rgb(245 158 11 / 0.2)}.bg-black\/50{background-color:rgb(0 0 0 / 0.5)}.bg-black\/60{background-color:rgb(0 0 0 / 0.6)}.bg-emerald-500{--tw-bg-opacity:1;background-color:rgb(16 185 129 / var(--tw-bg-opacity, 1))}.bg-emerald-500\/15{background-color:rgb(16 185 129 / 0.15)}.bg-emerald-500\/20{background-color:rgb(16 185 129 / 0.2)}.bg-emerald-600\/15{background-color:rgb(5 150 105 / 0.15)}.bg-indigo-500\/15{background-color:rgb(99 102 241 / 0.15)}.bg-slate-900\/15{background-color:rgb(15 23 42 / 0.15)}.bg-slate-900\/90{background-color:rgb(15 23 42 / 0.9)}.bg-transparent{background-color:transparent}.p-0\.5{padding:0.125rem}.p-1\.5{padding:0.375rem}.p-2{padding:0.5rem}.p-2\.5{padding:0.625rem}.p-3{padding:0.75rem}.p-3\.5{padding:0.875rem}.p-4{padding:1rem}.px-1{padding-left:0.25rem;padding-right:0.25rem}.px-1\.5{padding-left:0.375rem;padding-right:0.375rem}.px-2{padding-left:0.5rem;padding-right:0.5rem}.px-2\.5{padding-left:0.625rem;padding-right:0.625rem}.px-3{padding-left:0.75rem;padding-right:0.75rem}.px-3\.5{padding-left:0.875rem;padding-right:0.875rem}.py-0\.5{padding-top:0.125rem;padding-bottom:0.125rem}.py-1{padding-top:0.25rem;padding-bottom:0.25rem}.py-1\.5{padding-top:0.375rem;padding-bottom:0.375rem}.py-3{padding-top:0.75rem;padding-bottom:0.75rem}.pb-1{padding-bottom:0.25rem}.pb-3{padding-bottom:0.75rem}.pt-1{padding-top:0.25rem}.text-left{text-align:left}.text-center{text-align:center}.font-mono{font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace}.text-\[11px\]{font-size:11px}.text-base{font-size:1rem;line-height:1.5rem}.text-sm{font-size:0.875rem;line-height:1.25rem}.text-xs{font-size:0.75rem;line-height:1rem}.text-\[10px\]{font-size:10px}.font-bold{font-weight:700}.font-medium{font-weight:500}.font-semibold{font-weight:600}.uppercase{text-transform:uppercase}.leading-relaxed{line-height:1.625}.tracking-wider{letter-spacing:0.05em}.text-\[var\(--code-foreground\)\]{color:var(--code-foreground)}.text-\[var\(--foreground\)\]{color:var(--foreground)}.text-\[var\(--link\)\]{color:var(--link)}.text-\[var\(--muted-foreground\)\]{color:var(--muted-foreground)}.text-\[var\(--primary-foreground\)\]{color:var(--primary-foreground)}.text-amber-400{--tw-text-opacity:1;color:rgb(251 191 36 / var(--tw-text-opacity, 1))}.text-amber-500{--tw-text-opacity:1;color:rgb(245 158 11 / var(--tw-text-opacity, 1))}.text-blue-400{--tw-text-opacity:1;color:rgb(96 165 250 / var(--tw-text-opacity, 1))}.text-emerald-300{--tw-text-opacity:1;color:rgb(110 231 183 / var(--tw-text-opacity, 1))}.text-emerald-400{--tw-text-opacity:1;color:rgb(52 211 153 / var(--tw-text-opacity, 1))}.text-emerald-500{--tw-text-opacity:1;color:rgb(16 185 129 / var(--tw-text-opacity, 1))}.text-indigo-400{--tw-text-opacity:1;color:rgb(129 140 248 / var(--tw-text-opacity, 1))}.text-slate-950{--tw-text-opacity:1;color:rgb(2 6 23 / var(--tw-text-opacity, 1))}.text-white{--tw-text-opacity:1;color:rgb(255 255 255 / var(--tw-text-opacity, 1))}.underline{-webkit-text-decoration-line:underline;text-decoration-line:underline}.opacity-0{opacity:0}.shadow-2xl{--tw-shadow:0 25px 50px -12px rgb(0 0 0 / 0.25);--tw-shadow-colored:0 25px 50px -12px var(--tw-shadow-color);box-shadow:var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow)}.shadow-xl{--tw-shadow:0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);--tw-shadow-colored:0 20px 25px -5px var(--tw-shadow-color), 0 8px 10px -6px var(--tw-shadow-color);box-shadow:var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow)}.backdrop-blur{--tw-backdrop-blur:blur(8px);-webkit-backdrop-filter:var(--tw-backdrop-blur) var(--tw-backdrop-brightness) var(--tw-backdrop-contrast) var(--tw-backdrop-grayscale) var(--tw-backdrop-hue-rotate) var(--tw-backdrop-invert) var(--tw-backdrop-opacity) var(--tw-backdrop-saturate) var(--tw-backdrop-sepia);backdrop-filter:var(--tw-backdrop-blur) var(--tw-backdrop-brightness) var(--tw-backdrop-contrast) var(--tw-backdrop-grayscale) var(--tw-backdrop-hue-rotate) var(--tw-backdrop-invert) var(--tw-backdrop-opacity) var(--tw-backdrop-saturate) var(--tw-backdrop-sepia)}.backdrop-blur-\[1px\]{--tw-backdrop-blur:blur(1px);-webkit-backdrop-filter:var(--tw-backdrop-blur) var(--tw-backdrop-brightness) var(--tw-backdrop-contrast) var(--tw-backdrop-grayscale) var(--tw-backdrop-hue-rotate) var(--tw-backdrop-invert) var(--tw-backdrop-opacity) var(--tw-backdrop-saturate) var(--tw-backdrop-sepia);backdrop-filter:var(--tw-backdrop-blur) var(--tw-backdrop-brightness) var(--tw-backdrop-contrast) var(--tw-backdrop-grayscale) var(--tw-backdrop-hue-rotate) var(--tw-backdrop-invert) var(--tw-backdrop-opacity) var(--tw-backdrop-saturate) var(--tw-backdrop-sepia)}.transition-all{transition-property:all;transition-timing-function:cubic-bezier(0.4, 0, 0.2, 1);transition-duration:150ms}.hover\:bg-\[var\(--border\)\]:hover{background-color:var(--border)}.hover\:bg-\[var\(--card\)\]:hover{background-color:var(--card)}.hover\:bg-\[var\(--secondary\)\]:hover{background-color:var(--secondary)}.hover\:bg-amber-500\/25:hover{background-color:rgb(245 158 11 / 0.25)}.hover\:bg-amber-500\/30:hover{background-color:rgb(245 158 11 / 0.3)}.hover\:bg-emerald-500\/30:hover{background-color:rgb(16 185 129 / 0.3)}.hover\:bg-emerald-600\/25:hover{background-color:rgb(5 150 105 / 0.25)}.hover\:text-\[var\(--foreground\)\]:hover{color:var(--foreground)}.hover\:opacity-90:hover{opacity:0.9}.focus\:outline-none:focus{outline:2px solid transparent;outline-offset:2px}.focus\:ring-1:focus{--tw-ring-offset-shadow:var(--tw-ring-inset) 0 0 0 var(--tw-ring-offset-width) var(--tw-ring-offset-color);--tw-ring-shadow:var(--tw-ring-inset) 0 0 0 calc(1px + var(--tw-ring-offset-width)) var(--tw-ring-color);box-shadow:var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow, 0 0 #0000)}.focus\:ring-\[var\(--primary\)\]:focus{--tw-ring-color:var(--primary)}@media (min-width: 640px){.sm\:left-auto{left:auto}.sm\:inline{display:inline}.sm\:h-12{height:3rem}.sm\:w-52{width:13rem}.sm\:max-w-sm{max-width:24rem}.sm\:max-w-xs{max-width:20rem}.sm\:flex-row{flex-direction:row}.sm\:p-4{padding:1rem}.sm\:p-5{padding:1.25rem}.sm\:px-2{padding-left:0.5rem;padding-right:0.5rem}.sm\:px-3{padding-left:0.75rem;padding-right:0.75rem}.sm\:px-4{padding-left:1rem;padding-right:1rem}.sm\:py-1{padding-top:0.25rem;padding-bottom:0.25rem}.sm\:py-5{padding-top:1.25rem;padding-bottom:1.25rem}.sm\:text-base{font-size:1rem;line-height:1.5rem}.sm\:text-sm{font-size:0.875rem;line-height:1.25rem}.sm\:text-xs{font-size:0.75rem;line-height:1rem}}@media (min-width: 768px){.md\:static{position:static}.md\:inline{display:inline}.md\:flex{display:flex}.md\:hidden{display:none}.md\:grid-cols-2{grid-template-columns:repeat(2, minmax(0, 1fr))}.md\:shadow-none{--tw-shadow:0 0 #0000;--tw-shadow-colored:0 0 #0000;box-shadow:var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow)}}@media (min-width: 1024px){.lg\:inline{display:inline}}@media (prefers-color-scheme: dark){.dark\:bg-black\/40{background-color:rgb(0 0 0 / 0.4)}}</style><style>*, ::before, ::after{--tw-border-spacing-x:0;--tw-border-spacing-y:0;--tw-translate-x:0;--tw-translate-y:0;--tw-rotate:0;--tw-skew-x:0;--tw-skew-y:0;--tw-scale-x:1;--tw-scale-y:1;--tw-pan-x: ;--tw-pan-y: ;--tw-pinch-zoom: ;--tw-scroll-snap-strictness:proximity;--tw-gradient-from-position: ;--tw-gradient-via-position: ;--tw-gradient-to-position: ;--tw-ordinal: ;--tw-slashed-zero: ;--tw-numeric-figure: ;--tw-numeric-spacing: ;--tw-numeric-fraction: ;--tw-ring-inset: ;--tw-ring-offset-width:0px;--tw-ring-offset-color:#fff;--tw-ring-color:rgb(59 130 246 / 0.5);--tw-ring-offset-shadow:0 0 #0000;--tw-ring-shadow:0 0 #0000;--tw-shadow:0 0 #0000;--tw-shadow-colored:0 0 #0000;--tw-blur: ;--tw-brightness: ;--tw-contrast: ;--tw-grayscale: ;--tw-hue-rotate: ;--tw-invert: ;--tw-saturate: ;--tw-sepia: ;--tw-drop-shadow: ;--tw-backdrop-blur: ;--tw-backdrop-brightness: ;--tw-backdrop-contrast: ;--tw-backdrop-grayscale: ;--tw-backdrop-hue-rotate: ;--tw-backdrop-invert: ;--tw-backdrop-opacity: ;--tw-backdrop-saturate: ;--tw-backdrop-sepia: ;--tw-contain-size: ;--tw-contain-layout: ;--tw-contain-paint: ;--tw-contain-style: }::backdrop{--tw-border-spacing-x:0;--tw-border-spacing-y:0;--tw-translate-x:0;--tw-translate-y:0;--tw-rotate:0;--tw-skew-x:0;--tw-skew-y:0;--tw-scale-x:1;--tw-scale-y:1;--tw-pan-x: ;--tw-pan-y: ;--tw-pinch-zoom: ;--tw-scroll-snap-strictness:proximity;--tw-gradient-from-position: ;--tw-gradient-via-position: ;--tw-gradient-to-position: ;--tw-ordinal: ;--tw-slashed-zero: ;--tw-numeric-figure: ;--tw-numeric-spacing: ;--tw-numeric-fraction: ;--tw-ring-inset: ;--tw-ring-offset-width:0px;--tw-ring-offset-color:#fff;--tw-ring-color:rgb(59 130 246 / 0.5);--tw-ring-offset-shadow:0 0 #0000;--tw-ring-shadow:0 0 #0000;--tw-shadow:0 0 #0000;--tw-shadow-colored:0 0 #0000;--tw-blur: ;--tw-brightness: ;--tw-contrast: ;--tw-grayscale: ;--tw-hue-rotate: ;--tw-invert: ;--tw-saturate: ;--tw-sepia: ;--tw-drop-shadow: ;--tw-backdrop-blur: ;--tw-backdrop-brightness: ;--tw-backdrop-contrast: ;--tw-backdrop-grayscale: ;--tw-backdrop-hue-rotate: ;--tw-backdrop-invert: ;--tw-backdrop-opacity: ;--tw-backdrop-saturate: ;--tw-backdrop-sepia: ;--tw-contain-size: ;--tw-contain-layout: ;--tw-contain-paint: ;--tw-contain-style: }/* ! tailwindcss v3.4.17 | MIT License | https://tailwindcss.com */*,::after,::before{box-sizing:border-box;border-width:0;border-style:solid;border-color:#e5e7eb}::after,::before{--tw-content:''}:host,html{line-height:1.5;-webkit-text-size-adjust:100%;-moz-tab-size:4;tab-size:4;font-family:ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";font-feature-settings:normal;font-variation-settings:normal;-webkit-tap-highlight-color:transparent}body{margin:0;line-height:inherit}hr{height:0;color:inherit;border-top-width:1px}abbr:where([title]){-webkit-text-decoration:underline dotted;text-decoration:underline dotted}h1,h2,h3,h4,h5,h6{font-size:inherit;font-weight:inherit}a{color:inherit;text-decoration:inherit}b,strong{font-weight:bolder}code,kbd,pre,samp{font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;font-feature-settings:normal;font-variation-settings:normal;font-size:1em}small{font-size:80%}sub,sup{font-size:75%;line-height:0;position:relative;vertical-align:baseline}sub{bottom:-.25em}sup{top:-.5em}table{text-indent:0;border-color:inherit;border-collapse:collapse}button,input,optgroup,select,textarea{font-family:inherit;font-feature-settings:inherit;font-variation-settings:inherit;font-size:100%;font-weight:inherit;line-height:inherit;letter-spacing:inherit;color:inherit;margin:0;padding:0}button,select{text-transform:none}button,input:where([type=button]),input:where([type=reset]),input:where([type=submit]){-webkit-appearance:button;background-color:transparent;background-image:none}:-moz-focusring{outline:auto}:-moz-ui-invalid{box-shadow:none}progress{vertical-align:baseline}::-webkit-inner-spin-button,::-webkit-outer-spin-button{height:auto}[type=search]{-webkit-appearance:textfield;outline-offset:-2px}::-webkit-search-decoration{-webkit-appearance:none}::-webkit-file-upload-button{-webkit-appearance:button;font:inherit}summary{display:list-item}blockquote,dd,dl,figure,h1,h2,h3,h4,h5,h6,hr,p,pre{margin:0}fieldset{margin:0;padding:0}legend{padding:0}menu,ol,ul{list-style:none;margin:0;padding:0}dialog{padding:0}textarea{resize:vertical}input::placeholder,textarea::placeholder{opacity:1;color:#9ca3af}[role=button],button{cursor:pointer}:disabled{cursor:default}audio,canvas,embed,iframe,img,object,svg,video{display:block;vertical-align:middle}img,video{max-width:100%;height:auto}[hidden]:where(:not([hidden=until-found])){display:none}.pointer-events-none{pointer-events:none}.fixed{position:fixed}.absolute{position:absolute}.relative{position:relative}.inset-0{inset:0px}.inset-y-0{top:0px;bottom:0px}.bottom-4{bottom:1rem}.left-0{left:0px}.left-1\/2{left:50%}.left-4{left:1rem}.right-4{right:1rem}.top-24{top:6rem}.z-20{z-index:20}.z-30{z-index:30}.z-40{z-index:40}.z-50{z-index:50}.mx-0\.5{margin-left:0.125rem;margin-right:0.125rem}.mb-1\.5{margin-bottom:0.375rem}.mb-2{margin-bottom:0.5rem}.mt-0\.5{margin-top:0.125rem}.mt-1\.5{margin-top:0.375rem}.flex{display:flex}.grid{display:grid}.hidden{display:none}.h-1\.5{height:0.375rem}.h-11{height:2.75rem}.h-2{height:0.5rem}.h-2\.5{height:0.625rem}.h-28{height:7rem}.h-3\.5{height:0.875rem}.h-4{height:1rem}.h-7{height:1.75rem}.h-screen{height:100vh}.max-h-\[90vh\]{max-height:90vh}.w-1\.5{width:0.375rem}.w-2{width:0.5rem}.w-2\.5{width:0.625rem}.w-3\.5{width:0.875rem}.w-4{width:1rem}.w-7{width:1.75rem}.w-72{width:18rem}.w-\[1px\]{width:1px}.w-full{width:100%}.w-screen{width:100vw}.min-w-0{min-width:0px}.max-w-2xl{max-width:42rem}.max-w-\[130px\]{max-width:130px}.flex-1{flex:1 1 0%}.shrink-0{flex-shrink:0}.-translate-x-1\/2{--tw-translate-x:-50%;transform:translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y))}.cursor-crosshair{cursor:crosshair}.cursor-pointer{cursor:pointer}.grid-cols-1{grid-template-columns:repeat(1, minmax(0, 1fr))}.flex-col{flex-direction:column}.flex-wrap{flex-wrap:wrap}.items-start{align-items:flex-start}.items-center{align-items:center}.justify-center{justify-content:center}.justify-between{justify-content:space-between}.gap-0\.5{gap:0.125rem}.gap-1{gap:0.25rem}.gap-1\.5{gap:0.375rem}.gap-2{gap:0.5rem}.gap-2\.5{gap:0.625rem}.gap-3{gap:0.75rem}.space-y-1 > :not([hidden]) ~ :not([hidden]){--tw-space-y-reverse:0;margin-top:calc(0.25rem * calc(1 - var(--tw-space-y-reverse)));margin-bottom:calc(0.25rem * var(--tw-space-y-reverse))}.space-y-1\.5 > :not([hidden]) ~ :not([hidden]){--tw-space-y-reverse:0;margin-top:calc(0.375rem * calc(1 - var(--tw-space-y-reverse)));margin-bottom:calc(0.375rem * var(--tw-space-y-reverse))}.space-y-2 > :not([hidden]) ~ :not([hidden]){--tw-space-y-reverse:0;margin-top:calc(0.5rem * calc(1 - var(--tw-space-y-reverse)));margin-bottom:calc(0.5rem * var(--tw-space-y-reverse))}.space-y-3 > :not([hidden]) ~ :not([hidden]){--tw-space-y-reverse:0;margin-top:calc(0.75rem * calc(1 - var(--tw-space-y-reverse)));margin-bottom:calc(0.75rem * var(--tw-space-y-reverse))}.space-y-4 > :not([hidden]) ~ :not([hidden]){--tw-space-y-reverse:0;margin-top:calc(1rem * calc(1 - var(--tw-space-y-reverse)));margin-bottom:calc(1rem * var(--tw-space-y-reverse))}.overflow-auto{overflow:auto}.overflow-hidden{overflow:hidden}.overflow-x-auto{overflow-x:auto}.overflow-y-auto{overflow-y:auto}.truncate{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.rounded{border-radius:0.25rem}.rounded-2xl{border-radius:1rem}.rounded-full{border-radius:9999px}.rounded-lg{border-radius:0.5rem}.rounded-md{border-radius:0.375rem}.rounded-xl{border-radius:0.75rem}.border{border-width:1px}.border-b{border-bottom-width:1px}.border-r{border-right-width:1px}.border-t{border-top-width:1px}.border-\[var\(--border\)\]{border-color:var(--border)}.border-amber-400{--tw-border-opacity:1;border-color:rgb(251 191 36 / var(--tw-border-opacity, 1))}.border-amber-500\/25{border-color:rgb(245 158 11 / 0.25)}.border-amber-500\/30{border-color:rgb(245 158 11 / 0.3)}.border-emerald-500\/30{border-color:rgb(16 185 129 / 0.3)}.border-emerald-500\/40{border-color:rgb(16 185 129 / 0.4)}.border-indigo-500\/30{border-color:rgb(99 102 241 / 0.3)}.border-white\/15{border-color:rgb(255 255 255 / 0.15)}.border-\[var\(--primary\)\]{border-color:var(--primary)}.border-transparent{border-color:transparent}.bg-\[\#059669\]{--tw-bg-opacity:1;background-color:rgb(5 150 105 / var(--tw-bg-opacity, 1))}.bg-\[\#1D4ED8\]{--tw-bg-opacity:1;background-color:rgb(29 78 216 / var(--tw-bg-opacity, 1))}.bg-\[\#1E293B\]{--tw-bg-opacity:1;background-color:rgb(30 41 59 / var(--tw-bg-opacity, 1))}.bg-\[\#DC2626\]{--tw-bg-opacity:1;background-color:rgb(220 38 38 / var(--tw-bg-opacity, 1))}.bg-\[\#FACC15\]{--tw-bg-opacity:1;background-color:rgb(250 204 21 / var(--tw-bg-opacity, 1))}.bg-\[var\(--background\)\]{background-color:var(--background)}.bg-\[var\(--border\)\]{background-color:var(--border)}.bg-\[var\(--card\)\]{background-color:var(--card)}.bg-\[var\(--foreground\)\]{background-color:var(--foreground)}.bg-\[var\(--primary\)\]{background-color:var(--primary)}.bg-\[var\(--secondary\)\]{background-color:var(--secondary)}.bg-amber-300{--tw-bg-opacity:1;background-color:rgb(252 211 77 / var(--tw-bg-opacity, 1))}.bg-amber-500{--tw-bg-opacity:1;background-color:rgb(245 158 11 / var(--tw-bg-opacity, 1))}.bg-amber-500\/10{background-color:rgb(245 158 11 / 0.1)}.bg-amber-500\/15{background-color:rgb(245 158 11 / 0.15)}.bg-amber-500\/20{background-color:rgb(245 158 11 / 0.2)}.bg-black\/50{background-color:rgb(0 0 0 / 0.5)}.bg-black\/60{background-color:rgb(0 0 0 / 0.6)}.bg-emerald-500{--tw-bg-opacity:1;background-color:rgb(16 185 129 / var(--tw-bg-opacity, 1))}.bg-emerald-500\/15{background-color:rgb(16 185 129 / 0.15)}.bg-emerald-500\/20{background-color:rgb(16 185 129 / 0.2)}.bg-emerald-600\/15{background-color:rgb(5 150 105 / 0.15)}.bg-indigo-500\/15{background-color:rgb(99 102 241 / 0.15)}.bg-slate-900\/15{background-color:rgb(15 23 42 / 0.15)}.bg-slate-900\/90{background-color:rgb(15 23 42 / 0.9)}.bg-transparent{background-color:transparent}.p-0\.5{padding:0.125rem}.p-1\.5{padding:0.375rem}.p-2{padding:0.5rem}.p-2\.5{padding:0.625rem}.p-3{padding:0.75rem}.p-3\.5{padding:0.875rem}.p-4{padding:1rem}.px-1{padding-left:0.25rem;padding-right:0.25rem}.px-1\.5{padding-left:0.375rem;padding-right:0.375rem}.px-2{padding-left:0.5rem;padding-right:0.5rem}.px-2\.5{padding-left:0.625rem;padding-right:0.625rem}.px-3{padding-left:0.75rem;padding-right:0.75rem}.px-3\.5{padding-left:0.875rem;padding-right:0.875rem}.py-0\.5{padding-top:0.125rem;padding-bottom:0.125rem}.py-1{padding-top:0.25rem;padding-bottom:0.25rem}.py-1\.5{padding-top:0.375rem;padding-bottom:0.375rem}.py-3{padding-top:0.75rem;padding-bottom:0.75rem}.pb-1{padding-bottom:0.25rem}.pb-3{padding-bottom:0.75rem}.pt-1{padding-top:0.25rem}.text-left{text-align:left}.text-center{text-align:center}.font-mono{font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace}.text-\[11px\]{font-size:11px}.text-base{font-size:1rem;line-height:1.5rem}.text-sm{font-size:0.875rem;line-height:1.25rem}.text-xs{font-size:0.75rem;line-height:1rem}.text-\[10px\]{font-size:10px}.font-bold{font-weight:700}.font-medium{font-weight:500}.font-semibold{font-weight:600}.uppercase{text-transform:uppercase}.leading-relaxed{line-height:1.625}.tracking-wider{letter-spacing:0.05em}.text-\[var\(--code-foreground\)\]{color:var(--code-foreground)}.text-\[var\(--foreground\)\]{color:var(--foreground)}.text-\[var\(--link\)\]{color:var(--link)}.text-\[var\(--muted-foreground\)\]{color:var(--muted-foreground)}.text-\[var\(--primary-foreground\)\]{color:var(--primary-foreground)}.text-amber-400{--tw-text-opacity:1;color:rgb(251 191 36 / var(--tw-text-opacity, 1))}.text-amber-500{--tw-text-opacity:1;color:rgb(245 158 11 / var(--tw-text-opacity, 1))}.text-blue-400{--tw-text-opacity:1;color:rgb(96 165 250 / var(--tw-text-opacity, 1))}.text-emerald-300{--tw-text-opacity:1;color:rgb(110 231 183 / var(--tw-text-opacity, 1))}.text-emerald-400{--tw-text-opacity:1;color:rgb(52 211 153 / var(--tw-text-opacity, 1))}.text-emerald-500{--tw-text-opacity:1;color:rgb(16 185 129 / var(--tw-text-opacity, 1))}.text-indigo-400{--tw-text-opacity:1;color:rgb(129 140 248 / var(--tw-text-opacity, 1))}.text-slate-950{--tw-text-opacity:1;color:rgb(2 6 23 / var(--tw-text-opacity, 1))}.text-white{--tw-text-opacity:1;color:rgb(255 255 255 / var(--tw-text-opacity, 1))}.underline{-webkit-text-decoration-line:underline;text-decoration-line:underline}.opacity-0{opacity:0}.shadow-2xl{--tw-shadow:0 25px 50px -12px rgb(0 0 0 / 0.25);--tw-shadow-colored:0 25px 50px -12px var(--tw-shadow-color);box-shadow:var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow)}.shadow-xl{--tw-shadow:0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);--tw-shadow-colored:0 20px 25px -5px var(--tw-shadow-color), 0 8px 10px -6px var(--tw-shadow-color);box-shadow:var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow)}.backdrop-blur{--tw-backdrop-blur:blur(8px);-webkit-backdrop-filter:var(--tw-backdrop-blur) var(--tw-backdrop-brightness) var(--tw-backdrop-contrast) var(--tw-backdrop-grayscale) var(--tw-backdrop-hue-rotate) var(--tw-backdrop-invert) var(--tw-backdrop-opacity) var(--tw-backdrop-saturate) var(--tw-backdrop-sepia);backdrop-filter:var(--tw-backdrop-blur) var(--tw-backdrop-brightness) var(--tw-backdrop-contrast) var(--tw-backdrop-grayscale) var(--tw-backdrop-hue-rotate) var(--tw-backdrop-invert) var(--tw-backdrop-opacity) var(--tw-backdrop-saturate) var(--tw-backdrop-sepia)}.backdrop-blur-\[1px\]{--tw-backdrop-blur:blur(1px);-webkit-backdrop-filter:var(--tw-backdrop-blur) var(--tw-backdrop-brightness) var(--tw-backdrop-contrast) var(--tw-backdrop-grayscale) var(--tw-backdrop-hue-rotate) var(--tw-backdrop-invert) var(--tw-backdrop-opacity) var(--tw-backdrop-saturate) var(--tw-backdrop-sepia);backdrop-filter:var(--tw-backdrop-blur) var(--tw-backdrop-brightness) var(--tw-backdrop-contrast) var(--tw-backdrop-grayscale) var(--tw-backdrop-hue-rotate) var(--tw-backdrop-invert) var(--tw-backdrop-opacity) var(--tw-backdrop-saturate) var(--tw-backdrop-sepia)}.transition-all{transition-property:all;transition-timing-function:cubic-bezier(0.4, 0, 0.2, 1);transition-duration:150ms}.hover\:bg-\[var\(--border\)\]:hover{background-color:var(--border)}.hover\:bg-\[var\(--card\)\]:hover{background-color:var(--card)}.hover\:bg-\[var\(--secondary\)\]:hover{background-color:var(--secondary)}.hover\:bg-amber-500\/25:hover{background-color:rgb(245 158 11 / 0.25)}.hover\:bg-amber-500\/30:hover{background-color:rgb(245 158 11 / 0.3)}.hover\:bg-emerald-500\/30:hover{background-color:rgb(16 185 129 / 0.3)}.hover\:bg-emerald-600\/25:hover{background-color:rgb(5 150 105 / 0.25)}.hover\:text-\[var\(--foreground\)\]:hover{color:var(--foreground)}.hover\:opacity-90:hover{opacity:0.9}.focus\:outline-none:focus{outline:2px solid transparent;outline-offset:2px}.focus\:ring-1:focus{--tw-ring-offset-shadow:var(--tw-ring-inset) 0 0 0 var(--tw-ring-offset-width) var(--tw-ring-offset-color);--tw-ring-shadow:var(--tw-ring-inset) 0 0 0 calc(1px + var(--tw-ring-offset-width)) var(--tw-ring-color);box-shadow:var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow, 0 0 #0000)}.focus\:ring-\[var\(--primary\)\]:focus{--tw-ring-color:var(--primary)}@media (min-width: 640px){.sm\:left-auto{left:auto}.sm\:inline{display:inline}.sm\:h-12{height:3rem}.sm\:w-52{width:13rem}.sm\:max-w-sm{max-width:24rem}.sm\:max-w-xs{max-width:20rem}.sm\:flex-row{flex-direction:row}.sm\:p-4{padding:1rem}.sm\:p-5{padding:1.25rem}.sm\:px-2{padding-left:0.5rem;padding-right:0.5rem}.sm\:px-3{padding-left:0.75rem;padding-right:0.75rem}.sm\:px-4{padding-left:1rem;padding-right:1rem}.sm\:py-1{padding-top:0.25rem;padding-bottom:0.25rem}.sm\:py-5{padding-top:1.25rem;padding-bottom:1.25rem}.sm\:text-base{font-size:1rem;line-height:1.5rem}.sm\:text-sm{font-size:0.875rem;line-height:1.25rem}.sm\:text-xs{font-size:0.75rem;line-height:1rem}}@media (min-width: 768px){.md\:static{position:static}.md\:inline{display:inline}.md\:flex{display:flex}.md\:hidden{display:none}.md\:grid-cols-2{grid-template-columns:repeat(2, minmax(0, 1fr))}.md\:shadow-none{--tw-shadow:0 0 #0000;--tw-shadow-colored:0 0 #0000;box-shadow:var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow)}}@media (min-width: 1024px){.lg\:inline{display:inline}}@media (prefers-color-scheme: dark){.dark\:bg-black\/40{background-color:rgb(0 0 0 / 0.4)}}</style></head>
+<body class="bg-[var(--background)] text-[var(--foreground)] flex flex-col h-screen w-screen overflow-hidden">
+
+  <!-- TOP NAVIGATION BAR -->
+  <header class="h-11 sm:h-12 bg-[var(--card)] border-b border-[var(--border)] px-2 sm:px-3 flex items-center justify-between gap-1.5 shrink-0 z-30">
+    <!-- Left: Collapsible Sidebar Toggle + Device Mode + Editable Title -->
+    <div class="flex items-center gap-1.5 min-w-0 flex-1">
+      <button id="btn-toggle-sidebar" class="px-2 py-1.5 rounded-lg bg-[var(--secondary)] hover:opacity-90 text-[var(--foreground)] flex items-center gap-1 text-xs font-semibold border border-[var(--border)] shrink-0" title="展開/收合筆記目錄">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25H12"></path></svg>
+        <span>目錄</span>
+      </button>
+
+      <!-- Device Mode Switcher -->
+      <div class="flex items-center bg-[var(--secondary)] p-0.5 rounded-lg border border-[var(--border)] text-[11px] shrink-0">
+        <button id="mode-ipad" class="px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-md font-medium bg-[var(--primary)] text-[var(--primary-foreground)] transition-all">
+          🎨 iPad
+        </button>
+        <button id="mode-iphone" class="px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-md font-medium text-[var(--muted-foreground)] hover:text-[var(--foreground)] transition-all">
+          📱 iPhone
+        </button>
+      </div>
+
+      <!-- Current Note Title Editable -->
+      <input id="note-title-input" type="text" value="微積分與系統架構筆記" class="bg-transparent font-semibold text-xs sm:text-sm text-[var(--foreground)] focus:outline-none focus:ring-1 focus:ring-[var(--primary)] rounded px-1.5 py-0.5 min-w-0 flex-1 max-w-[130px] sm:max-w-xs truncate" aria-label="筆記標題">
+    </div>
+
+    <!-- Right: Import Notability Folder/Files + Merge + Cloud -->
+    <div class="flex items-center gap-1 shrink-0">
+      <!-- Direct Notability Folder / .note File Importer -->
+      <label class="px-2.5 py-1 rounded-lg text-[11px] sm:text-xs font-semibold bg-amber-500 text-slate-950 hover:opacity-90 flex items-center gap-1 cursor-pointer shadow-xs" title="直接選取 I:\我的雲端硬碟\Notability 裡的所有 .note 檔，自動解壓縮 Session.plist 轉成可修改筆跡！">
+        <span>📥</span>
+        <span>匯入 Notability (.note)</span>
+        <input id="input-notability-files" type="file" accept=".note,.json" multiple="" class="hidden">
+      </label>
+
+      <!-- Whole Folder Picker for I:\我的雲端硬碟\Notability -->
+      <label class="hidden md:flex px-2 py-1 rounded-lg text-xs font-medium bg-amber-500/15 text-amber-400 border border-amber-500/30 hover:bg-amber-500/25 items-center gap-1 cursor-pointer" title="直接選取整個 I:\我的雲端硬碟\Notability 資料夾">
+        <span>📂</span>
+        <span>選取整個資料夾</span>
+        <input id="input-notability-folder" type="file" webkitdirectory="" directory="" multiple="" class="hidden">
+      </label>
+
+      <button id="btn-simulate-conflict" class="px-2 py-1 rounded-lg text-[11px] sm:text-xs font-medium bg-emerald-600/15 text-emerald-500 border border-emerald-500/30 hover:bg-emerald-600/25 flex items-center gap-1" title="模擬手機與iPad同時寫字，自動執行 CRDT 筆劃合集 (A ∪ B)">
+        <span>🔗</span>
+        <span class="hidden lg:inline">合集(A∪B)</span>
+      </button>
+
+      <button id="btn-download-pwa-html" type="button" class="px-2.5 py-1 rounded-lg text-[11px] sm:text-xs font-semibold bg-emerald-500 text-slate-950 hover:opacity-90 flex items-center gap-1 shadow-xs" title="下載單一檔案 index.html 直接拖進 GitHub 即可部署！">
+        <span>📥</span>
+        <span class="hidden md:inline">下載 index.html</span>
+      </button>
+
+      <button id="btn-open-cloud-modal" class="px-2.5 py-1 rounded-lg text-[11px] sm:text-xs font-medium bg-[var(--primary)] text-[var(--primary-foreground)] hover:opacity-90 flex items-center gap-1 shadow-xs">
+        <span id="gdrive-top-dot" class="w-2 h-2 rounded-full bg-amber-300"></span>
+        <span id="gdrive-top-label" class="hidden sm:inline">Google 雲端</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- SECOND ROW: GOODNOTES / NOTABILITY TOOLBAR -->
+  <div class="bg-[var(--card)]/95 backdrop-blur border-b border-[var(--border)] px-2 py-1.5 flex items-center justify-between gap-2 overflow-x-auto shrink-0 z-20">
+    <!-- Left: Undo / Redo -->
+    <div class="flex items-center gap-1 shrink-0">
+      <button id="btn-undo" class="p-1.5 rounded-lg hover:bg-[var(--secondary)] text-[var(--muted-foreground)] hover:text-[var(--foreground)]" title="復原 (Undo)">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 15 3 9m0 0 6-6M3 9h12a6 6 0 0 1 0 12h-3"></path></svg>
+      </button>
+      <button id="btn-redo" class="p-1.5 rounded-lg hover:bg-[var(--secondary)] text-[var(--muted-foreground)] hover:text-[var(--foreground)]" title="重做 (Redo)">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="m15 15 6-6m0 0-6-6m6 6H9a6 6 0 0 0 0 12h3"></path></svg>
+      </button>
+    </div>
+
+    <!-- Center: Core Tools -->
+    <div class="flex items-center gap-1 bg-[var(--secondary)] px-1.5 py-1 rounded-xl border border-[var(--border)] shrink-0">
+      <button data-tool="pen" class="tool-btn active px-2 py-1 rounded-lg text-xs font-medium bg-[var(--primary)] text-[var(--primary-foreground)] flex items-center gap-1">
+        <span>✒️</span>
+        <span>鋼筆</span>
+      </button>
+
+      <button data-tool="highlighter" class="tool-btn px-2 py-1 rounded-lg text-xs font-medium text-[var(--foreground)] hover:bg-[var(--card)] flex items-center gap-1">
+        <span>🖍️</span>
+        <span>螢光筆</span>
+      </button>
+
+      <button data-tool="eraser" class="tool-btn px-2 py-1 rounded-lg text-xs font-medium text-[var(--foreground)] hover:bg-[var(--card)] flex items-center gap-1" title="Apple Pencil 點兩下可隨時在畫筆與橡皮擦之間切換！">
+        <span>🧹</span>
+        <span>橡皮擦</span>
+      </button>
+
+      <button data-tool="lasso" class="tool-btn px-2 py-1 rounded-lg text-xs font-medium text-[var(--foreground)] hover:bg-[var(--card)] flex items-center gap-1">
+        <span>🧲</span>
+        <span>套索</span>
+      </button>
+
+      <button data-tool="text" class="tool-btn px-2 py-1 rounded-lg text-xs font-medium text-[var(--foreground)] hover:bg-[var(--card)] flex items-center gap-1">
+        <span>🔤</span>
+        <span>文字</span>
+      </button>
+
+      <div class="h-4 w-[1px] bg-[var(--border)] mx-0.5"></div>
+
+      <!-- Color Swatches -->
+      <div class="flex items-center gap-1.5 px-1">
+        <button data-color="#1E293B" class="color-dot active w-4 h-4 rounded-full bg-[#1E293B]" title="極致黑"></button>
+        <button data-color="#1D4ED8" class="color-dot w-4 h-4 rounded-full bg-[#1D4ED8]" title="鋼筆藍"></button>
+        <button data-color="#DC2626" class="color-dot w-4 h-4 rounded-full bg-[#DC2626]" title="批改紅"></button>
+        <button data-color="#059669" class="color-dot w-4 h-4 rounded-full bg-[#059669]" title="森林綠"></button>
+        <button data-color="#FACC15" class="color-dot w-4 h-4 rounded-full bg-[#FACC15] border border-amber-400" title="螢光黃"></button>
+      </div>
+
+      <div class="h-4 w-[1px] bg-[var(--border)] mx-0.5"></div>
+
+      <!-- Stroke Width Presets -->
+      <div class="flex items-center gap-0.5">
+        <button data-size="2.2" class="size-btn px-1.5 py-1 rounded hover:bg-[var(--card)] flex items-center justify-center" title="細字">
+          <span class="w-1.5 h-1.5 rounded-full bg-[var(--foreground)]"></span>
+        </button>
+        <button data-size="4.0" class="size-btn px-1.5 py-1 rounded bg-[var(--card)] shadow-xs flex items-center justify-center" title="適中">
+          <span class="w-2.5 h-2.5 rounded-full bg-[var(--foreground)]"></span>
+        </button>
+        <button data-size="7.5" class="size-btn px-1.5 py-1 rounded hover:bg-[var(--card)] flex items-center justify-center" title="粗筆">
+          <span class="w-3.5 h-3.5 rounded-full bg-[var(--foreground)]"></span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Right: Smart Apple Pencil vs Finger Behavior + Zoom + Paper Template -->
+    <div class="flex items-center gap-1.5 shrink-0">
+      <button id="btn-finger-mode" class="px-2 py-1 rounded-lg text-xs font-medium bg-[var(--primary)] text-[var(--primary-foreground)] flex items-center gap-1 hover:opacity-90" title="預設開啟：Apple Pencil 碰到螢幕直接寫字，手指碰到螢幕自動變成滑動與雙指縮放！">
+        <span>🖐️</span>
+        <span id="finger-mode-label">手指=滑動 / Pencil=寫字</span>
+      </button>
+
+      <div class="flex items-center bg-[var(--secondary)] rounded-lg border border-[var(--border)] p-0.5 text-xs">
+        <button id="btn-zoom-out" class="px-1.5 py-0.5 hover:bg-[var(--card)] rounded font-bold" title="縮小">－</button>
+        <button id="btn-zoom-fit" class="px-1.5 py-0.5 hover:bg-[var(--card)] rounded font-mono text-[11px]" title="點擊自動適應螢幕寬度">115%</button>
+        <button id="btn-zoom-in" class="px-1.5 py-0.5 hover:bg-[var(--card)] rounded font-bold" title="放大">＋</button>
+      </div>
+
+      <select id="paper-template-select" class="bg-[var(--secondary)] text-[var(--foreground)] text-xs rounded-lg px-2 py-1 border border-[var(--border)] focus:outline-none">
+        <option value="cornell">📄 康乃爾</option>
+        <option value="grid" selected="">📐 方格紙</option>
+        <option value="ruled">📝 橫線紙</option>
+        <option value="dotted">⠿ 點陣紙</option>
+        <option value="blank">🟨 空白紙</option>
+      </select>
+
+      <button id="btn-add-page" class="px-2 py-1 rounded-lg text-xs font-medium bg-[var(--secondary)] hover:bg-[var(--border)] text-[var(--foreground)] border border-[var(--border)]">
+        +加頁
+      </button>
+    </div>
+  </div>
+
+  <!-- MAIN WORKSPACE -->
+  <div class="flex-1 flex overflow-hidden relative">
+
+    <!-- MOBILE BACKDROP OVERLAY -->
+    <div id="sidebar-backdrop" class="hidden fixed inset-0 bg-black/50 backdrop-blur-[1px] z-30 md:hidden"></div>
+
+    <!-- COLLAPSIBLE NOTEBOOK CATALOG SIDEBAR -->
+    <aside id="notebook-sidebar" class="fixed md:static inset-y-0 left-0 w-72 bg-[var(--card)] border-r border-[var(--border)] flex flex-col shrink-0 z-40 shadow-2xl md:shadow-none" style="display: flex;">
+      <div class="p-3 border-b border-[var(--border)] flex items-center justify-between">
+        <div>
+          <h2 class="text-xs font-bold uppercase tracking-wider text-[var(--muted-foreground)]">所有筆記目錄 (Catalog)</h2>
+          <p id="device-storage-summary" class="text-[11px] text-[var(--muted-foreground)] mt-0.5">支援直接拖入 .note 檔案</p>
+        </div>
+        <div class="flex items-center gap-1">
+          <button id="btn-new-note" class="px-2.5 py-1 rounded-lg text-xs font-semibold bg-[var(--primary)] text-[var(--primary-foreground)] hover:opacity-90">
+            + 新筆記
+          </button>
+          <button id="btn-close-sidebar-inside" type="button" class="w-7 h-7 flex items-center justify-center rounded-lg bg-[var(--secondary)] hover:bg-[var(--border)] text-[var(--foreground)] font-bold text-xs cursor-pointer" title="收合目錄">
+            ✕
+          </button>
+        </div>
+      </div>
+
+      <!-- Direct Notability Import Box inside Sidebar -->
+      <div class="p-2.5 bg-amber-500/10 border-b border-amber-500/25 space-y-1.5">
+        <div class="text-[11px] font-semibold text-amber-400">📂 讀取 I:\我的雲端硬碟\Notability</div>
+        <div class="flex gap-1.5">
+          <label class="flex-1 text-center py-1 px-2 rounded bg-amber-500 text-slate-950 font-semibold text-[11px] cursor-pointer hover:opacity-90">
+            選取 .note 檔案
+            <input id="sidebar-notability-files" type="file" accept=".note,.json" multiple="" class="hidden">
+          </label>
+          <label class="flex-1 text-center py-1 px-2 rounded bg-[var(--card)] text-[var(--foreground)] border border-[var(--border)] font-medium text-[11px] cursor-pointer hover:bg-[var(--secondary)]">
+            選整個資料夾
+            <input id="sidebar-notability-folder" type="file" webkitdirectory="" directory="" multiple="" class="hidden">
+          </label>
+        </div>
+      </div>
+
+      <!-- 30-day TTL Quick Trigger -->
+      <div class="px-3 py-1.5 bg-[var(--secondary)]/60 border-b border-[var(--border)] flex items-center justify-between gap-2 text-xs">
+        <span class="text-[var(--muted-foreground)] truncate">&gt;30天未開自動卸載</span>
+        <button id="btn-run-ttl-cleanup" class="px-2 py-0.5 rounded bg-amber-500/20 text-amber-500 border border-amber-500/30 hover:bg-amber-500/30 font-medium shrink-0">
+          🧹 檢查卸載
+        </button>
+      </div>
+
+      <!-- Notes List Container -->
+      <div id="notes-list" class="flex-1 overflow-y-auto p-2 space-y-1.5"><button class="w-full text-left p-2.5 rounded-xl border transition-all bg-[var(--secondary)] border-[var(--primary)] shadow-xs">
+          <div class="font-semibold text-xs text-[var(--foreground)] truncate">微積分與系統架構筆記</div>
+          <div class="flex items-center justify-between mt-1.5 gap-1">
+            <span class="px-1.5 py-0.5 rounded text-[10px] bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">💾 iPad 本機原檔</span>
+            <span class="text-[10px] text-[var(--muted-foreground)]">今天</span>
+          </div>
+        </button><button class="w-full text-left p-2.5 rounded-xl border transition-all bg-transparent border-transparent hover:bg-[var(--secondary)]/60">
+          <div class="font-semibold text-xs text-[var(--foreground)] truncate">日文 N2 文法手寫整理</div>
+          <div class="flex items-center justify-between mt-1.5 gap-1">
+            <span class="px-1.5 py-0.5 rounded text-[10px] bg-amber-500/15 text-amber-400 border border-amber-500/30">☁️ 已卸載至 Google 雲端</span>
+            <span class="text-[10px] text-[var(--muted-foreground)]">42天前</span>
+          </div>
+        </button></div>
+
+      <!-- Page Thumbnails Bar -->
+      <div class="p-2.5 border-t border-[var(--border)] bg-[var(--secondary)]/30">
+        <div class="flex items-center justify-between text-xs mb-1.5">
+          <span class="font-medium text-[var(--muted-foreground)]">當前筆記頁數</span>
+          <span id="page-indicator" class="font-mono text-xs text-[var(--foreground)]">第 1 / 1 頁</span>
+        </div>
+        <div id="page-pills" class="flex items-center gap-1.5 overflow-x-auto pb-1"><button class="px-2.5 py-1 rounded-md text-xs font-mono border bg-[var(--primary)] text-[var(--primary-foreground)] border-[var(--primary)]">P.1</button></div>
+      </div>
+    </aside>
+
+    <!-- CENTER: SCROLLABLE & PINCH-ZOOMABLE PAPER VIEWPORT (Also supports Drag & Drop .note files!) -->
+    <main id="canvas-viewport" class="flex-1 bg-slate-900/15 dark:bg-black/40 overflow-auto flex flex-col items-center py-3 sm:py-5 px-2 sm:px-4 relative">
+
+      <!-- Floating Apple Pencil Double-Tap Tool Switch HUD -->
+      <div id="pencil-hud" class="opacity-0 fixed top-24 left-1/2 -translate-x-1/2 bg-slate-900/90 text-white px-3.5 py-1.5 rounded-full shadow-xl border border-white/15 text-xs font-semibold flex items-center gap-2 z-50">
+        <span id="pencil-hud-icon">🧹</span>
+        <span id="pencil-hud-text">Apple Pencil 點兩下：已切換至橡皮擦</span>
+      </div>
+
+      <!-- Live Toast Banner -->
+      <div id="toast-banner" class="hidden fixed bottom-4 right-4 left-4 sm:left-auto sm:max-w-sm bg-[var(--card)] border border-[var(--border)] shadow-xl rounded-xl p-3 z-50 flex items-start gap-2.5 text-xs">
+        <span id="toast-icon" class="text-base">✨</span>
+        <div class="flex-1">
+          <div id="toast-title" class="font-semibold text-[var(--foreground)]">系統通知</div>
+          <div id="toast-desc" class="text-[var(--muted-foreground)] mt-0.5 leading-relaxed"></div>
+        </div>
+      </div>
+
+      <!-- Compact Status Bar above Paper -->
+      <div class="mb-2 flex flex-wrap items-center justify-center gap-1.5 text-[11px]">
+        <span id="note-storage-badge" class="px-2 py-0.5 rounded-full font-medium bg-emerald-500/15 text-emerald-500 border border-emerald-500/30">💾 iPad 原檔 + ☁️ 模擬雲端</span>
+        <span id="hardware-detect-badge" class="px-2 py-0.5 rounded-full bg-indigo-500/15 text-indigo-400 border border-indigo-500/30 font-medium">
+          ✒️ 自動感應：Pencil=寫字 / 手指=滑動縮放 / 點兩下=切橡皮擦
+        </span>
+        <span id="stroke-stats-badge" class="px-2 py-0.5 rounded-full bg-[var(--card)] text-[var(--muted-foreground)] border border-[var(--border)] font-mono">筆劃: 5 | 墓碑: 0</span>
+      </div>
+
+      <!-- SCALE WRAPPER FOR RESPONSIVE FIT & PINCH ZOOM -->
+      <div id="paper-scale-wrapper" class="relative shrink-0 flex items-start justify-center" style="width: 874px; height: 1173px;">
+        <div id="paper-container" class="paper-sheet relative rounded-xs overflow-hidden" style="width: 760px; height: 1020px; transform: scale(1.15);">
+          <canvas id="bg-canvas" width="760" height="1020" class="absolute inset-0 pointer-events-none"></canvas>
+          <canvas id="ink-canvas" width="760" height="1020" class="absolute inset-0 cursor-crosshair"></canvas>
+          <canvas id="overlay-canvas" width="760" height="1020" class="absolute inset-0 pointer-events-none"></canvas>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- MODAL: GOOGLE DRIVE REAL SYNC, 30-DAY AUTO-OFFLOAD & CRDT CONTROL CENTER -->
+  <div id="cloud-modal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-xs z-50 flex items-center justify-center p-3 sm:p-4">
+    <div class="bg-[var(--card)] border border-[var(--border)] rounded-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl p-4 sm:p-5 space-y-4">
+      <div class="flex items-center justify-between border-b border-[var(--border)] pb-3">
+        <div>
+          <h3 class="text-sm sm:text-base font-bold text-[var(--foreground)]">☁️ Google 雲端硬碟連線 ＆ Notability 原檔轉換中心</h3>
+          <p class="text-xs text-[var(--muted-foreground)] mt-0.5">支援直接讀取 <code class="text-[var(--code-foreground)]">I:\我的雲端硬碟\Notability</code> 內的 <code class="text-[var(--code-foreground)]">.note</code> 檔，並同步至 Google Drive</p>
+        </div>
+        <button id="btn-close-cloud-modal" class="p-1.5 rounded-lg hover:bg-[var(--secondary)] text-[var(--muted-foreground)]">✕</button>
+      </div>
+
+      <!-- Real Google Drive & Firestore Auto-Sync Panel -->
+      <div class="p-3.5 rounded-xl bg-[var(--secondary)]/50 border border-[var(--border)] space-y-3">
+        <div class="flex flex-wrap items-center justify-between gap-2">
+          <div class="text-xs font-bold text-[var(--foreground)]">⚡ 全自動雲端同步架構（Firestore 熱資料中介層 ＋ Google Drive 冷資料原檔）</div>
+          <span id="gdrive-modal-status" class="px-2 py-0.5 rounded text-[11px] bg-amber-500/15 text-amber-400 border border-amber-500/30 font-medium">
+            目前狀態：本機快取模式
+          </span>
+        </div>
+
+        <!-- Option 1: Google Apps Script Permanent Auto-Sync Bridge (Never expires!) -->
+        <div class="space-y-1.5 bg-[var(--card)] p-3 rounded-lg border border-[var(--border)]">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <div class="text-xs font-semibold text-emerald-400">★ 推薦 1：Google Apps Script 永久免登入自動同步（直接讀寫你的 Notability 資料夾，永不過期）</div>
+            <button id="btn-copy-gas-script" type="button" class="px-2.5 py-1 rounded-md bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 text-[11px] font-semibold hover:bg-emerald-500/30">
+              📋 一鍵複製 google-drive-bridge.gs 程式碼
+            </button>
+          </div>
+          <p class="text-[11px] text-[var(--muted-foreground)] leading-relaxed">
+            點擊右上方「一鍵複製程式碼」，貼到你 Google 帳號的 <a href="https://script.google.com/" target="_blank" rel="noopener" class="underline text-[var(--link)]">script.google.com</a> 部署成網頁應用程式，把網址與密碼貼在下方。之後打開 App 就會<strong>全自動讀取與備份 Google Drive 裡的 .note 與筆記</strong>，永遠不必手動拉檔案或重登！
+          </p>
+          <div class="flex flex-col sm:flex-row gap-2 pt-1">
+            <input id="gas-bridge-url-input" type="text" placeholder="貼上 https://script.google.com/macros/s/.../exec 網址" class="flex-1 bg-[var(--secondary)] border border-[var(--border)] rounded-lg px-3 py-1.5 text-xs text-[var(--foreground)] focus:outline-none focus:ring-1 focus:ring-[var(--primary)]">
+            <input id="gas-passkey-input" type="password" placeholder="輸入你的專屬通行密碼 (SECRET_PASSKEY)" class="sm:w-52 bg-[var(--secondary)] border border-[var(--border)] rounded-lg px-3 py-1.5 text-xs text-[var(--foreground)] focus:outline-none focus:ring-1 focus:ring-[var(--primary)]">
+            <button id="btn-connect-gas-bridge" type="button" class="px-3 py-1.5 rounded-lg bg-emerald-500 text-slate-950 text-xs font-semibold shrink-0 hover:opacity-90">
+              啟用加密自動同步
+            </button>
+          </div>
+        </div>
+
+        <!-- Option 2: Firestore Real-Time Hot Middleware -->
+        <div class="space-y-1.5 bg-[var(--card)] p-3 rounded-lg border border-[var(--border)]">
+          <div class="text-xs font-semibold text-blue-400">★ 推薦 2：Firebase Firestore 毫秒級中介層（30天內熱資料秒開，&gt;30天自動封存至 Drive）</div>
+          <p class="text-[11px] text-[var(--muted-foreground)] leading-relaxed">
+            填入你的免費 Firebase <code class="text-[var(--code-foreground)]">projectId</code>，iPad 畫下一筆會直接寫入 Firestore 中介層讓 iPhone 秒速同步；超過 30 天未開啟則自動轉存 Google Drive 並卸載！
+          </p>
+          <div class="flex flex-col sm:flex-row gap-2 pt-1">
+            <input id="firestore-project-input" type="text" placeholder="輸入 Firebase Project ID (例如 my-inkflow-notes)" class="flex-1 bg-[var(--secondary)] border border-[var(--border)] rounded-lg px-3 py-1.5 text-xs text-[var(--foreground)] focus:outline-none focus:ring-1 focus:ring-[var(--primary)]">
+            <button id="btn-connect-firestore" type="button" class="px-3 py-1.5 rounded-lg bg-[var(--primary)] text-[var(--primary-foreground)] text-xs font-semibold shrink-0 hover:opacity-90">
+              啟用 Firestore 中介層
+            </button>
+          </div>
+        </div>
+
+        <!-- Option 3: Direct Google OAuth Token -->
+        <div class="space-y-1.5 bg-[var(--card)] p-3 rounded-lg border border-[var(--border)]">
+          <div class="text-xs font-semibold text-[var(--foreground)]">方式 3：Google OAuth Access Token 臨時直連</div>
+          <div class="flex flex-col sm:flex-row gap-2 pt-1">
+            <input id="gdrive-access-token-input" type="password" placeholder="貼上 ya29.a0... 開頭的 Google Access Token" class="flex-1 bg-[var(--secondary)] border border-[var(--border)] rounded-lg px-3 py-1.5 text-xs text-[var(--foreground)] focus:outline-none focus:ring-1 focus:ring-[var(--primary)]">
+            <button id="btn-sync-with-token" type="button" class="px-3 py-1.5 rounded-lg bg-[var(--secondary)] border border-[var(--border)] text-[var(--foreground)] text-xs font-semibold shrink-0 hover:opacity-90">
+              Token 掃描同步
+            </button>
+          </div>
+        </div>
+
+        <div class="flex flex-wrap items-center justify-between gap-2 pt-1 text-xs">
+          <span class="text-[var(--muted-foreground)]">手動匯出/匯入 JSON 原檔合集：</span>
+          <div class="flex gap-2">
+            <button id="btn-export-json" type="button" class="px-2.5 py-1 rounded border border-[var(--border)] bg-[var(--card)] hover:bg-[var(--secondary)] text-xs">⬇ 匯出此筆記 (.inkflow.json)</button>
+            <label class="px-2.5 py-1 rounded border border-[var(--border)] bg-[var(--card)] hover:bg-[var(--secondary)] text-xs cursor-pointer">
+              ⬆ 匯入原檔並合集 (A∪B)
+              <input id="input-import-merge" type="file" accept=".json" class="hidden">
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <!-- Simulator Cards -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div class="p-3 rounded-xl bg-[var(--secondary)]/60 border border-[var(--border)] space-y-2">
+          <div class="text-xs font-bold text-[var(--foreground)]">⏳ 測試：超過 30 天未開自動刪除 iPad 原檔</div>
+          <button id="btn-sim-35days" class="w-full py-1.5 px-3 rounded-lg bg-amber-500 text-slate-950 font-semibold text-xs hover:opacity-90">
+            模擬此筆記已 35 天未開啟並釋放 iPad 空間
+          </button>
+        </div>
+
+        <div class="p-3 rounded-xl bg-[var(--secondary)]/60 border border-[var(--border)] space-y-2">
+          <div class="text-xs font-bold text-[var(--foreground)]">🔗 測試：iPad 與 iPhone 同時修改「合集 (A ∪ B)」</div>
+          <button id="btn-sim-crdt-modal" class="w-full py-1.5 px-3 rounded-lg bg-emerald-500 text-slate-950 font-semibold text-xs hover:opacity-90">
+            模擬 iPhone 丟入原檔並執行合集 (Union)
+          </button>
+        </div>
+      </div>
+
+      <div class="space-y-1">
+        <div class="text-xs font-semibold text-[var(--muted-foreground)]">即時雲端與 Notability 轉檔日誌 (Sync &amp; Import Audit Log)</div>
+        <div id="sync-audit-log" class="bg-[var(--background)] border border-[var(--border)] rounded-lg p-2.5 h-28 overflow-y-auto font-mono text-[11px] space-y-1 text-[var(--muted-foreground)]"><div class="text-amber-400">[16:37:09] [30天自動卸載] 「日文 N2 文法手寫整理」已 42 天未開，已從 iPad 刪除本機原檔，保留於 Google Drive。</div></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /***********************************************************************
+     * INKFLOW NOTES — COMPLETE ENGINE WITH PURE-JS NOTABILITY (.note)
+     * UNZIPPER + BINARY PLIST (`bplist00` Session.plist) CURVE EXTRACTOR!
+     ***********************************************************************/
+
+    const PAPER_BASE_WIDTH = 760;
+    const PAPER_BASE_HEIGHT = 1020;
+    const STORAGE_KEY_LOCAL_IPAD = 'inkflow_ipad_local_db_v1';
+    const STORAGE_KEY_GOOGLE_DRIVE = 'inkflow_simulated_gdrive_v1';
+
+    const state = {
+      deviceMode: 'ipad',
+      sidebarOpen: window.innerWidth >= 768,
+      fingerAlwaysPan: true,
+      currentTool: 'pen',
+      previousDrawTool: 'pen',
+      currentColor: '#1E293B',
+      currentSize: 4.0,
+      currentNoteId: 'note_calc_01',
+      currentPageIndex: 0,
+      zoomScale: 1.0,
+      activePointers: new Map(),
+      isPinchingOrPanning: false,
+      pinchStartDist: 0,
+      pinchStartScale: 1.0,
+      panLastCenter: null,
+      lastPencilTapTime: 0,
+      lastPencilTapPos: { x: 0, y: 0 },
+      lastPencilStrokeId: null,
+      pointerDownPos: { x: 0, y: 0 },
+      pointerDownTime: 0,
+      isDrawing: false,
+      currentStroke: null,
+      lassoPoints: [],
+      selectedStrokeIds: new Set(),
+      isDraggingLasso: false,
+      lassoDragStart: null,
+      undoStack: [],
+      redoStack: [],
+      iphoneTempCache: {},
+      gdriveAccessToken: localStorage.getItem('inkflow_gdrive_token') || null,
+      gdriveFolderId: '1HmVNP7K25JhVuZCHErkvZKlF0AmK0J6O'
+    };
+
+    function logAudit(msg, type = 'info') {
+      const box = document.getElementById('sync-audit-log');
+      if (!box) return;
+      const time = new Date().toLocaleTimeString('zh-TW', { hour12: false });
+      const row = document.createElement('div');
+      row.className = type === 'merge' ? 'text-emerald-400' : type === 'ttl' ? 'text-amber-400' : 'text-[var(--muted-foreground)]';
+      row.textContent = `[${time}] ${msg}`;
+      box.prepend(row);
+    }
+
+    function showToast(icon, title, desc) {
+      const banner = document.getElementById('toast-banner');
+      document.getElementById('toast-icon').textContent = icon;
+      document.getElementById('toast-title').textContent = title;
+      document.getElementById('toast-desc').textContent = desc;
+      banner.classList.remove('hidden');
+      clearTimeout(window.__toastTimer);
+      window.__toastTimer = setTimeout(() => banner.classList.add('hidden'), 4800);
+    }
+
+    function showPencilHud(icon, text) {
+      const hud = document.getElementById('pencil-hud');
+      document.getElementById('pencil-hud-icon').textContent = icon;
+      document.getElementById('pencil-hud-text').textContent = text;
+      hud.classList.remove('opacity-0');
+      hud.classList.add('opacity-100');
+      clearTimeout(window.__hudTimer);
+      window.__hudTimer = setTimeout(() => {
+        hud.classList.remove('opacity-100');
+        hud.classList.add('opacity-0');
+      }, 1600);
+    }
+
+    /***********************************************************************
+     * PURE-JS NOTABILITY `.note` ARCHIVE UNZIPPER + `bplist00` PARSER
+     * Directly reads `.note` files from `I:\我的雲端硬碟\Notability` in browser!
+     ***********************************************************************/
+    async function inflateRawBytes(compressedUint8) {
+      const ds = new DecompressionStream('deflate-raw');
+      const writer = ds.writable.getWriter();
+      writer.write(compressedUint8);
+      writer.close();
+      const reader = ds.readable.getReader();
+      const chunks = [];
+      let total = 0;
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        chunks.push(value);
+        total += value.byteLength;
+      }
+      const out = new Uint8Array(total);
+      let offset = 0;
+      for (const c of chunks) {
+        out.set(c, offset);
+        offset += c.byteLength;
+      }
+      return out;
+    }
+
+    async function unzipNotabilityArchive(arrayBuffer) {
+      const bytes = new Uint8Array(arrayBuffer);
+      const view = new DataView(arrayBuffer);
+      const files = {};
+
+      // Locate End of Central Directory (EOCD: 0x06054b50)
+      let eocdOffset = -1;
+      for (let i = bytes.length - 22; i >= Math.max(0, bytes.length - 65557); i--) {
+        if (view.getUint32(i, true) === 0x06054b50) {
+          eocdOffset = i;
+          break;
+        }
+      }
+      if (eocdOffset === -1) throw new Error('這不是有效的 ZIP / .note 壓縮檔');
+
+      const cdCount = view.getUint16(eocdOffset + 10, true);
+      let cdPos = view.getUint32(eocdOffset + 16, true);
+      const decoder = new TextDecoder('utf-8');
+
+      for (let i = 0; i < cdCount; i++) {
+        if (view.getUint32(cdPos, true) !== 0x02014b50) break;
+        const method = view.getUint16(cdPos + 10, true);
+        const compSize = view.getUint32(cdPos + 20, true);
+        const nameLen = view.getUint16(cdPos + 28, true);
+        const extraLen = view.getUint16(cdPos + 30, true);
+        const commentLen = view.getUint16(cdPos + 32, true);
+        const localHeaderOffset = view.getUint32(cdPos + 42, true);
+        const fileName = decoder.decode(bytes.subarray(cdPos + 46, cdPos + 46 + nameLen));
+
+        // Read Local File Header to jump past variable-length local extra field
+        const localNameLen = view.getUint16(localHeaderOffset + 26, true);
+        const localExtraLen = view.getUint16(localHeaderOffset + 28, true);
+        const dataStart = localHeaderOffset + 30 + localNameLen + localExtraLen;
+        const rawSlice = bytes.subarray(dataStart, dataStart + compSize);
+
+        if (fileName.endsWith('Session.plist') || fileName.endsWith('.plist')) {
+          files[fileName] = method === 8 ? await inflateRawBytes(rawSlice) : rawSlice;
+        }
+        cdPos += 46 + nameLen + extraLen + commentLen;
+      }
+      return files;
+    }
+
+    // Parse Apple Binary Plist (bplist00) to extract dicts, strings, numbers, and raw NSData buffers
+    function parseBinaryPlist(uint8) {
+      const magic = new TextDecoder('ascii').decode(uint8.subarray(0, 8));
+      if (magic !== 'bplist00') throw new Error('Session.plist 非 bplist00 格式');
+
+      const view = new DataView(uint8.buffer, uint8.byteOffset, uint8.byteLength);
+      const trailerOffset = uint8.byteLength - 32;
+      const offsetIntSize = view.getUint8(trailerOffset + 6);
+      const objectRefSize = view.getUint8(trailerOffset + 7);
+      const numObjects = Number(view.getBigUint64(trailerOffset + 8, false));
+      const topObject = Number(view.getBigUint64(trailerOffset + 16, false));
+      const offsetTableOffset = Number(view.getBigUint64(trailerOffset + 24, false));
+
+      function readUInt(pos, len) {
+        let val = 0;
+        for (let i = 0; i < len; i++) val = (val * 256) + uint8[pos + i];
+        return val;
+      }
+
+      const offsets = [];
+      for (let i = 0; i < numObjects; i++) {
+        offsets.push(readUInt(offsetTableOffset + i * offsetIntSize, offsetIntSize));
+      }
+
+      const cache = new Map();
+
+      function readLengthAndOffset(pos, lowNibble) {
+        if (lowNibble !== 0x0F) return { length: lowNibble, nextPos: pos + 1 };
+        const intMarker = uint8[pos + 1];
+        const byteCount = 1 << (intMarker & 0x0F);
+        const len = readUInt(pos + 2, byteCount);
+        return { length: len, nextPos: pos + 2 + byteCount };
+      }
+
+      function parseObject(objIdx, depth = 0) {
+        if (depth > 32) return null;
+        if (cache.has(objIdx)) return cache.get(objIdx);
+
+        const pos = offsets[objIdx];
+        const marker = uint8[pos];
+        const high = marker & 0xF0;
+        const low = marker & 0x0F;
+
+        let result = null;
+        if (marker === 0x00) result = null;
+        else if (marker === 0x08) result = false;
+        else if (marker === 0x09) result = true;
+        else if (high === 0x10) {
+          const byteCount = 1 << low;
+          result = readUInt(pos + 1, byteCount);
+        } else if (high === 0x20) {
+          const byteCount = 1 << low;
+          if (byteCount === 4) result = view.getFloat32(pos + 1, false);
+          else if (byteCount === 8) result = view.getFloat64(pos + 1, false);
+        } else if (high === 0x40) {
+          // Raw NSData binary buffer! (This holds curvespoints, curvesnumpoints, curveswidths, curvescolors)
+          const { length, nextPos } = readLengthAndOffset(pos, low);
+          result = { __nsdata: true, bytes: uint8.subarray(nextPos, nextPos + length) };
+        } else if (high === 0x50) {
+          const { length, nextPos } = readLengthAndOffset(pos, low);
+          result = new TextDecoder('ascii').decode(uint8.subarray(nextPos, nextPos + length));
+        } else if (high === 0x60) {
+          const { length, nextPos } = readLengthAndOffset(pos, low);
+          result = new TextDecoder('utf-16be').decode(uint8.subarray(nextPos, nextPos + length * 2));
+        } else if (high === 0x80) {
+          // UID reference in NSKeyedArchiver
+          const byteCount = low + 1;
+          result = { UID: readUInt(pos + 1, byteCount) };
+        } else if (high === 0xA0) {
+          const { length, nextPos } = readLengthAndOffset(pos, low);
+          const arr = [];
+          for (let i = 0; i < length; i++) {
+            const ref = readUInt(nextPos + i * objectRefSize, objectRefSize);
+            arr.push(ref);
+          }
+          result = { __arrayRefs: arr };
+        } else if (high === 0xD0) {
+          const { length, nextPos } = readLengthAndOffset(pos, low);
+          const dict = {};
+          const keysStart = nextPos;
+          const valsStart = nextPos + length * objectRefSize;
+          for (let i = 0; i < length; i++) {
+            const keyRef = readUInt(keysStart + i * objectRefSize, objectRefSize);
+            const valRef = readUInt(valsStart + i * objectRefSize, objectRefSize);
+            const keyName = parseObject(keyRef, depth + 1);
+            if (typeof keyName === 'string') {
+              dict[keyName] = valRef;
+            }
+          }
+          result = { __dictRefs: dict };
+        }
+
+        cache.set(objIdx, result);
+        return result;
+      }
+
+      for (let i = 0; i < numObjects; i++) parseObject(i, 0);
+      return { cache, numObjects, topObject, parseObject };
+    }
+
+    // Convert parsed Notability Session.plist into InkFlow Note structure
+    function convertNotabilityPlistToInkFlow(fileName, plistBytes) {
+      const { cache, numObjects } = parseBinaryPlist(plistBytes);
+      const cleanTitle = fileName.replace(/\.note$/i, '');
+
+      let curvesPointsBytes = null;
+      let curvesNumPointsBytes = null;
+      let curvesWidthsBytes = null;
+      let curvesColorsBytes = null;
+      const extractedTextBlocks = [];
+
+      // Scan all parsed objects in NSKeyedArchiver table for Notability handwriting & text keys
+      for (let i = 0; i < numObjects; i++) {
+        const obj = cache.get(i);
+        if (!obj || !obj.__dictRefs) continue;
+        const refs = obj.__dictRefs;
+
+        const resolveBuffer = (refId) => {
+          if (refId === undefined) return null;
+          const target = cache.get(refId);
+          if (!target) return null;
+          if (target.__nsdata) return target.bytes;
+          if (target.__dictRefs && target.__dictRefs['NS.data'] !== undefined) {
+            const inner = cache.get(target.__dictRefs['NS.data']);
+            if (inner && inner.__nsdata) return inner.bytes;
+          }
+          return null;
+        };
+
+        if (refs['curvespoints'] !== undefined) curvesPointsBytes = resolveBuffer(refs['curvespoints']) || curvesPointsBytes;
+        if (refs['curvesnumpoints'] !== undefined) curvesNumPointsBytes = resolveBuffer(refs['curvesnumpoints']) || curvesNumPointsBytes;
+        if (refs['curveswidths'] !== undefined) curvesWidthsBytes = resolveBuffer(refs['curveswidths']) || curvesWidthsBytes;
+        if (refs['curvescolors'] !== undefined) curvesColorsBytes = resolveBuffer(refs['curvescolors']) || curvesColorsBytes;
+
+        if (refs['NS.string'] !== undefined) {
+          const strVal = cache.get(refs['NS.string']);
+          if (typeof strVal === 'string' && strVal.trim().length > 1 && !strVal.startsWith('$')) {
+            extractedTextBlocks.push(strVal.trim());
+          }
+        }
+      }
+
+      const pagesMap = {};
+      const ensurePage = (pageIdx) => {
+        if (!pagesMap[pageIdx]) {
+          pagesMap[pageIdx] = { pageNumber: pageIdx + 1, strokes: {}, texts: {} };
+        }
+        return pagesMap[pageIdx];
+      };
+      ensurePage(0);
+
+      let totalExtractedStrokes = 0;
+
+      if (curvesPointsBytes && curvesPointsBytes.byteLength >= 8) {
+        const ptFloats = new Float32Array(
+          curvesPointsBytes.buffer.slice(curvesPointsBytes.byteOffset, curvesPointsBytes.byteOffset + curvesPointsBytes.byteLength)
+        );
+        const totalPoints = Math.floor(ptFloats.length / 2);
+
+        let strokeCounts = [];
+        if (curvesNumPointsBytes && curvesNumPointsBytes.byteLength >= 4) {
+          const countsArr = new Int32Array(
+            curvesNumPointsBytes.buffer.slice(curvesNumPointsBytes.byteOffset, curvesNumPointsBytes.byteOffset + curvesNumPointsBytes.byteLength)
+          );
+          strokeCounts = Array.from(countsArr);
+        } else {
+          strokeCounts = [totalPoints];
+        }
+
+        let widthsArr = null;
+        if (curvesWidthsBytes && curvesWidthsBytes.byteLength >= 4) {
+          widthsArr = new Float32Array(
+            curvesWidthsBytes.buffer.slice(curvesWidthsBytes.byteOffset, curvesWidthsBytes.byteOffset + curvesWidthsBytes.byteLength)
+          );
+        }
+
+        let colorsBytes = curvesColorsBytes;
+
+        // Scale factor from Notability page width (~612pt PDF space) to InkFlow 760px canvas
+        const scale = 760 / 612;
+        const pageHeightPt = 792; // Standard Letter/A4 height in Notability points
+
+        let ptCursor = 0;
+        for (let sIdx = 0; sIdx < strokeCounts.length; sIdx++) {
+          const count = strokeCounts[sIdx];
+          if (count <= 0 || ptCursor + count > totalPoints) break;
+
+          const points = [];
+          let avgY = 0;
+          for (let k = 0; k < count; k++) {
+            const rawX = ptFloats[(ptCursor + k) * 2];
+            const rawY = ptFloats[(ptCursor + k) * 2 + 1];
+            if (Number.isFinite(rawX) && Number.isFinite(rawY)) {
+              avgY += rawY;
+              points.push({ x: rawX, y: rawY, p: 0.7 });
+            }
+          }
+          ptCursor += count;
+
+          if (points.length === 0) continue;
+          avgY /= points.length;
+          const pageIdx = Math.max(0, Math.floor(avgY / pageHeightPt));
+          const pageObj = ensurePage(pageIdx);
+
+          // Normalize Y coordinate inside that page and scale to 760x1020
+          const normalizedPoints = points.map(p => ({
+            x: Math.min(755, Math.max(5, p.x * scale)),
+            y: Math.min(1015, Math.max(5, (p.y - pageIdx * pageHeightPt) * scale)),
+            p: 0.7
+          }));
+
+          // Extract stroke color if available
+          let hexColor = '#1E293B';
+          let isHighlighter = false;
+          if (colorsBytes && colorsBytes.byteLength >= (sIdx + 1) * 4) {
+            const r = colorsBytes[sIdx * 4];
+            const g = colorsBytes[sIdx * 4 + 1];
+            const b = colorsBytes[sIdx * 4 + 2];
+            const a = colorsBytes[sIdx * 4 + 3];
+            hexColor = `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
+            if (a > 0 && a < 210) isHighlighter = true;
+          }
+
+          let strokeWidth = widthsArr && widthsArr[sIdx] ? widthsArr[sIdx] * scale : 3.5;
+          if (strokeWidth > 12) isHighlighter = true;
+
+          const strokeId = `stk_notability_${Date.now()}_${sIdx}`;
+          pageObj.strokes[strokeId] = {
+            id: strokeId,
+            tool: isHighlighter ? 'highlighter' : 'pen',
+            color: hexColor,
+            size: Math.min(24, Math.max(1.8, strokeWidth)),
+            device: 'Notability匯入',
+            createdAt: Date.now(),
+            updatedAt: Date.now(),
+            deleted: false,
+            points: normalizedPoints
+          };
+          totalExtractedStrokes++;
+        }
+      }
+
+      // Add any extracted typed text blocks to Page 1
+      if (extractedTextBlocks.length > 0) {
+        const p0 = ensurePage(0);
+        const combinedText = extractedTextBlocks.slice(0, 12).join('\n');
+        p0.texts[`txt_nb_${Date.now()}`] = {
+          id: `txt_nb_${Date.now()}`,
+          x: 48,
+          y: 80,
+          text: combinedText,
+          color: '#1E293B',
+          fontSize: 15,
+          updatedAt: Date.now(),
+          deleted: false
+        };
+      }
+
+      const sortedPages = Object.keys(pagesMap)
+        .map(Number)
+        .sort((a, b) => a - b)
+        .map((k, idx) => ({
+          pageNumber: idx + 1,
+          strokes: pagesMap[k].strokes,
+          texts: pagesMap[k].texts
+        }));
+
+      return {
+        note: {
+          id: `note_nb_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+          title: `📒 ${cleanTitle}`,
+          template: 'grid',
+          createdAt: Date.now(),
+          updatedAt: Date.now(),
+          lastOpenedAt: Date.now(),
+          offloaded: false,
+          pages: sortedPages
+        },
+        totalExtractedStrokes,
+        totalPages: sortedPages.length
+      };
+    }
+
+    async function handleNotabilityFilesUpload(fileList) {
+      if (!fileList || fileList.length === 0) return;
+      const files = Array.from(fileList).filter(f => f.name.toLowerCase().endsWith('.note') || f.name.toLowerCase().endsWith('.json'));
+      if (files.length === 0) {
+        showToast('⚠️', '未找到 .note 或 .json 筆記檔', '請確認選取的資料夾或檔案中包含 Notability 的 .note 檔案。');
+        return;
+      }
+
+      let importedCount = 0;
+      let totalStrokesAll = 0;
+      let lastImportedId = null;
+
+      for (const file of files) {
+        try {
+          if (file.name.toLowerCase().endsWith('.json')) {
+            const text = await file.text();
+            const parsed = JSON.parse(text);
+            if (parsed && parsed.pages) {
+              cloudDriveDB[parsed.id] = parsed;
+              ipadLocalDB[parsed.id] = JSON.parse(JSON.stringify(parsed));
+              lastImportedId = parsed.id;
+              importedCount++;
+            }
+            continue;
+          }
+
+          // Parse .note archive!
+          const buf = await file.arrayBuffer();
+          const unzipped = await unzipNotabilityArchive(buf);
+          const plistKey = Object.keys(unzipped).find(k => k.endsWith('Session.plist')) || Object.keys(unzipped)[0];
+          if (!plistKey) throw new Error('找不到內部 Session.plist');
+
+          const { note, totalExtractedStrokes, totalPages } = convertNotabilityPlistToInkFlow(file.name, unzipped[plistKey]);
+          cloudDriveDB[note.id] = note;
+          ipadLocalDB[note.id] = JSON.parse(JSON.stringify(note));
+          lastImportedId = note.id;
+          importedCount++;
+          totalStrokesAll += totalExtractedStrokes;
+          logAudit(`[Notability 原檔匯入] 成功解析「${file.name}」：共 ${totalPages} 頁、${totalExtractedStrokes} 筆可編輯手寫筆劃！`, 'merge');
+        } catch (err) {
+          logAudit(`[匯入錯誤] ${file.name}: ${err.message}`, 'ttl');
+        }
+      }
+
+      if (importedCount > 0 && lastImportedId) {
+        state.currentNoteId = lastImportedId;
+        state.currentPageIndex = 0;
+        saveDatabases();
+        renderSidebarCatalog();
+        renderActivePage();
+        showToast('🎉', `成功匯入 ${importedCount} 份 Notability 筆記！`, `共還原 ${totalStrokesAll} 筆手寫筆劃，現在可以直接用橡皮擦或套索修改它們！`);
+      }
+    }
+
+    /***********************************************************************
+     * APPLE PENCIL DOUBLE-TAP ERASER SWITCHER
+     ***********************************************************************/
+    function selectTool(toolName, fromDoubleTap = false) {
+      if (toolName === 'pen' || toolName === 'highlighter') {
+        state.previousDrawTool = toolName;
+      }
+      state.currentTool = toolName;
+
+      document.querySelectorAll('[data-tool]').forEach(b => {
+        b.className = 'tool-btn px-2 py-1 rounded-lg text-xs font-medium text-[var(--foreground)] hover:bg-[var(--card)] flex items-center gap-1';
+      });
+      const activeBtn = document.querySelector(`[data-tool="${toolName}"]`);
+      if (activeBtn) {
+        activeBtn.className = 'tool-btn active px-2 py-1 rounded-lg text-xs font-medium bg-[var(--primary)] text-[var(--primary-foreground)] flex items-center gap-1';
+      }
+
+      if (fromDoubleTap) {
+        const labelMap = {
+          eraser: ['🧹', 'Apple Pencil 點兩下：已切換至「橡皮擦」'],
+          pen: ['✒️', 'Apple Pencil 點兩下：已切回「鋼筆」'],
+          highlighter: ['🖍️', 'Apple Pencil 點兩下：已切回「螢光筆」']
+        };
+        const [icon, msg] = labelMap[toolName] || ['✨', `已切換工具：${toolName}`];
+        showPencilHud(icon, msg);
+      }
+    }
+
+    function togglePencilEraserDoubleTap() {
+      const targetTool = state.currentTool === 'eraser' ? (state.previousDrawTool || 'pen') : 'eraser';
+      selectTool(targetTool, true);
+    }
+
+    window.addEventListener('keydown', (e) => {
+      if (document.activeElement && ['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) return;
+      if (e.key === 'e' || e.key === 'E' || e.key === 'F19') {
+        e.preventDefault();
+        togglePencilEraserDoubleTap();
+      }
+    });
+
+    /***********************************************************************
+     * SIDEBAR COLLAPSE & RESPONSIVE PAPER ZOOM
+     ***********************************************************************/
+    function applySidebarState() {
+      const sidebar = document.getElementById('notebook-sidebar');
+      const backdrop = document.getElementById('sidebar-backdrop');
+      const isMobile = window.innerWidth < 768;
+
+      sidebar.classList.remove('collapsed-desktop', 'collapsed-mobile', 'hidden');
+      if (state.sidebarOpen) {
+        sidebar.style.display = 'flex';
+        if (isMobile) backdrop.classList.remove('hidden');
+        else backdrop.classList.add('hidden');
+      } else {
+        sidebar.style.display = 'none';
+        backdrop.classList.add('hidden');
+      }
+    }
+
+    function toggleSidebar(forceState) {
+      state.sidebarOpen = typeof forceState === 'boolean' ? forceState : !state.sidebarOpen;
+      applySidebarState();
+      requestAnimationFrame(() => {
+        fitPaperToViewport();
+      });
+    }
+
+    function setPaperZoom(newScale) {
+      const clamped = Math.min(3.0, Math.max(0.38, newScale));
+      state.zoomScale = clamped;
+      const wrapper = document.getElementById('paper-scale-wrapper');
+      const container = document.getElementById('paper-container');
+      container.style.transform = `scale(${clamped})`;
+      wrapper.style.width = `${Math.round(PAPER_BASE_WIDTH * clamped)}px`;
+      wrapper.style.height = `${Math.round(PAPER_BASE_HEIGHT * clamped)}px`;
+      document.getElementById('btn-zoom-fit').textContent = `${Math.round(clamped * 100)}%`;
+    }
+
+    function fitPaperToViewport() {
+      const viewport = document.getElementById('canvas-viewport');
+      const availWidth = viewport.clientWidth - 20;
+      const fitScale = Math.min(1.15, Math.max(0.4, availWidth / PAPER_BASE_WIDTH));
+      setPaperZoom(fitScale);
+    }
+
+    /***********************************************************************
+     * INITIAL DEMO DATA & CRDT / 30-DAY AUTO-OFFLOAD LOGIC
+     ***********************************************************************/
+    function createInitialDemoNotes() {
+      const now = Date.now();
+      const fortyDaysAgo = now - (42 * 24 * 60 * 60 * 1000);
+      const makeCurve = (id, pts, color, size, tool = 'pen', device = 'iPad') => ({
+        id, tool, color, size, device,
+        createdAt: now - 3600000,
+        updatedAt: now - 3600000,
+        deleted: false,
+        points: pts.map(([x, y, p = 0.65]) => ({ x, y, p }))
+      });
+
+      return {
+        'note_calc_01': {
+          id: 'note_calc_01',
+          title: '微積分與系統架構筆記',
+          template: 'cornell',
+          createdAt: now - 86400000 * 5,
+          updatedAt: now - 120000,
+          lastOpenedAt: now,
+          pages: [{
+            pageNumber: 1,
+            strokes: {
+              'stk_demo_highlight_1': makeCurve('stk_demo_highlight_1', [[235, 138, 0.8], [350, 138, 0.8], [495, 138, 0.8]], '#FACC15', 18, 'highlighter', 'iPad'),
+              'stk_demo_underline': makeCurve('stk_demo_underline', [[235, 232, 0.7], [380, 230, 0.8], [540, 233, 0.6]], '#1D4ED8', 3.5, 'pen', 'iPad'),
+              'stk_demo_arrow': makeCurve('stk_demo_arrow', [[180, 315, 0.6], [205, 315, 0.7], [225, 315, 0.8], [216, 307, 0.7], [225, 315, 0.8], [216, 323, 0.7]], '#DC2626', 3.5, 'pen', 'iPad'),
+              'stk_demo_box': makeCurve('stk_demo_box', [[235, 505, 0.6], [700, 505, 0.6], [700, 660, 0.6], [235, 660, 0.6], [235, 505, 0.6]], '#059669', 3.0, 'pen', 'iPad')
+            },
+            texts: {
+              'txt_demo_1': { id: 'txt_demo_1', x: 235, y: 118, text: 'Ch.4 雙端無衝突同步 & Notability .note 直接匯入', color: '#1E293B', fontSize: 19, updatedAt: now - 3600000, deleted: false },
+              'txt_demo_2': { id: 'txt_demo_2', x: 36, y: 185, text: '核心觀念：\n1. 支援 .note 直讀\n2. Pencil 自動寫字\n3. 手指自動滑動\n4. 點兩下切橡皮擦', color: '#1D4ED8', fontSize: 14, updatedAt: now - 3600000, deleted: false },
+              'txt_demo_3': { id: 'txt_demo_3', x: 235, y: 195, text: '點擊上方橘色「📥 匯入 Notability (.note)」或「📂 選取整個資料夾」：', color: '#334155', fontSize: 15, updatedAt: now - 3600000, deleted: false },
+              'txt_demo_4': { id: 'txt_demo_4', x: 238, y: 300, text: '可直接選擇你電腦的 I:\\我的雲端硬碟\\Notability 資料夾！', color: '#DC2626', fontSize: 16, updatedAt: now - 3600000, deleted: false },
+              'txt_demo_5': { id: 'txt_demo_5', x: 252, y: 535, text: '📂 如何載入你的 Notability 筆記：\n• 點右上角橘色「📥 匯入 Notability (.note)」，直接選 I:\\我的雲端硬碟\\Notability\n• 程式會自動解開 .note 內的 Session.plist，把你以前寫的每一筆劃無損還原！\n• 還原後可直接拿「🧹 橡皮擦」擦除或「🧲 套索」移動舊字跡！', color: '#065F46', fontSize: 13.5, updatedAt: now - 3600000, deleted: false }
+            }
+          }]
+        },
+        'note_japanese_02': {
+          id: 'note_japanese_02',
+          title: '日文 N2 文法手寫整理',
+          template: 'grid',
+          createdAt: fortyDaysAgo,
+          updatedAt: fortyDaysAgo,
+          lastOpenedAt: fortyDaysAgo,
+          pages: [{
+            pageNumber: 1,
+            strokes: {
+              'stk_jp_1': makeCurve('stk_jp_1', [[80, 140, 0.7], [280, 140, 0.7]], '#DC2626', 4.0, 'pen', 'iPad')
+            },
+            texts: {
+              'txt_jp_1': { id: 'txt_jp_1', x: 80, y: 105, text: '～に違いない（一定...／必定...）— 這篇筆記已超過 42 天未開啟！', color: '#1E293B', fontSize: 18, updatedAt: fortyDaysAgo, deleted: false }
+            }
+          }]
+        }
+      };
+    }
+
+    let cloudDriveDB = {};
+    let ipadLocalDB = {};
+
+    function initDatabases() {
+      const savedCloud = localStorage.getItem(STORAGE_KEY_GOOGLE_DRIVE);
+      const savedLocal = localStorage.getItem(STORAGE_KEY_LOCAL_IPAD);
+      if (savedCloud && savedLocal) {
+        try {
+          cloudDriveDB = JSON.parse(savedCloud);
+          ipadLocalDB = JSON.parse(savedLocal);
+        } catch (e) {
+          cloudDriveDB = createInitialDemoNotes();
+          ipadLocalDB = JSON.parse(JSON.stringify(cloudDriveDB));
+        }
+      } else {
+        cloudDriveDB = createInitialDemoNotes();
+        ipadLocalDB = JSON.parse(JSON.stringify(cloudDriveDB));
+        runThirtyDayAutoOffload(true);
+        saveDatabases();
+      }
+    }
+
+    function saveDatabases() {
+      try {
+        localStorage.setItem(STORAGE_KEY_GOOGLE_DRIVE, JSON.stringify(cloudDriveDB));
+        localStorage.setItem(STORAGE_KEY_LOCAL_IPAD, JSON.stringify(ipadLocalDB));
+      } catch (e) {}
+    }
+
+    function runThirtyDayAutoOffload(silent = false) {
+      const now = Date.now();
+      let offloadedCount = 0;
+      const offloadedTitles = [];
+
+      Object.keys(ipadLocalDB).forEach(noteId => {
+        const localNote = ipadLocalDB[noteId];
+        if (!localNote || localNote.offloaded) return;
+
+        const daysUnused = (now - (localNote.lastOpenedAt || localNote.updatedAt)) / (1000 * 60 * 60 * 24);
+        if (daysUnused >= 30) {
+          if (cloudDriveDB[noteId]) {
+            cloudDriveDB[noteId] = mergeNotesCRDT(localNote, cloudDriveDB[noteId]).mergedNote;
+          } else {
+            cloudDriveDB[noteId] = JSON.parse(JSON.stringify(localNote));
+          }
+          ipadLocalDB[noteId] = {
+            id: localNote.id,
+            title: localNote.title,
+            template: localNote.template,
+            createdAt: localNote.createdAt,
+            updatedAt: localNote.updatedAt,
+            lastOpenedAt: localNote.lastOpenedAt,
+            offloaded: true,
+            pages: null
+          };
+          offloadedCount++;
+          offloadedTitles.push(`${localNote.title} (${Math.floor(daysUnused)}天未開)`);
+          logAudit(`[30天自動卸載] 「${localNote.title}」已 ${Math.floor(daysUnused)} 天未開，已從 iPad 刪除本機原檔，保留於 Google Drive。`, 'ttl');
+        }
+      });
+
+      saveDatabases();
+      renderSidebarCatalog();
+      updateStatusBadges();
+
+      if (!silent) {
+        if (offloadedCount > 0) {
+          showToast('🧹', `已自動卸載 ${offloadedCount} 份超過 30 天未開的筆記`, `已釋放 iPad 空間：${offloadedTitles.join('、')}。`);
+        } else {
+          showToast('✅', '所有本機筆記皆在 30 天內開啟過', '可至右上角「雲端」面板一鍵模擬超過 35 天未開啟。');
+        }
+      }
+    }
+
+    function mergeNotesCRDT(noteA, noteB) {
+      if (!noteA || !noteA.pages) return { mergedNote: JSON.parse(JSON.stringify(noteB)) };
+      if (!noteB || !noteB.pages) return { mergedNote: JSON.parse(JSON.stringify(noteA)) };
+
+      const merged = JSON.parse(JSON.stringify(noteA));
+      merged.title = (noteA.updatedAt >= noteB.updatedAt) ? noteA.title : noteB.title;
+      merged.updatedAt = Math.max(noteA.updatedAt || 0, noteB.updatedAt || 0);
+      merged.lastOpenedAt = Math.max(noteA.lastOpenedAt || 0, noteB.lastOpenedAt || 0);
+      merged.offloaded = false;
+
+      const maxPages = Math.max(noteA.pages.length, noteB.pages.length);
+      merged.pages = [];
+
+      for (let i = 0; i < maxPages; i++) {
+        const pageA = noteA.pages[i] || { pageNumber: i + 1, strokes: {}, texts: {} };
+        const pageB = noteB.pages[i] || { pageNumber: i + 1, strokes: {}, texts: {} };
+
+        const mergedStrokes = {};
+        const allStrokeIds = new Set([...Object.keys(pageA.strokes || {}), ...Object.keys(pageB.strokes || {})]);
+        allStrokeIds.forEach(strokeId => {
+          const sA = pageA.strokes?.[strokeId];
+          const sB = pageB.strokes?.[strokeId];
+          if (sA && !sB) mergedStrokes[strokeId] = sA;
+          else if (!sA && sB) mergedStrokes[strokeId] = sB;
+          else if (sA && sB) {
+            const deleted = Boolean(sA.deleted || sB.deleted);
+            const winner = ((sB.updatedAt || 0) > (sA.updatedAt || 0)) ? { ...sB } : { ...sA };
+            winner.deleted = deleted;
+            mergedStrokes[strokeId] = winner;
+          }
+        });
+
+        const mergedTexts = {};
+        const allTextIds = new Set([...Object.keys(pageA.texts || {}), ...Object.keys(pageB.texts || {})]);
+        allTextIds.forEach(txtId => {
+          const tA = pageA.texts?.[txtId];
+          const tB = pageB.texts?.[txtId];
+          if (tA && !tB) mergedTexts[txtId] = tA;
+          else if (!tA && tB) mergedTexts[txtId] = tB;
+          else if (tA && tB) {
+            const deleted = Boolean(tA.deleted || tB.deleted);
+            const winner = ((tB.updatedAt || 0) > (tA.updatedAt || 0)) ? { ...tB } : { ...tA };
+            winner.deleted = deleted;
+            mergedTexts[txtId] = winner;
+          }
+        });
+
+        merged.pages.push({ pageNumber: i + 1, strokes: mergedStrokes, texts: mergedTexts });
+      }
+      return { mergedNote: merged };
+    }
+
+    function getActiveNote() {
+      const id = state.currentNoteId;
+      if (state.deviceMode === 'ipad') {
+        const local = ipadLocalDB[id];
+        if (local && !local.offloaded && local.pages) return local;
+        if (cloudDriveDB[id]) {
+          const restored = JSON.parse(JSON.stringify(cloudDriveDB[id]));
+          restored.lastOpenedAt = Date.now();
+          restored.offloaded = false;
+          ipadLocalDB[id] = restored;
+          saveDatabases();
+          showToast('☁️', '已從 Google Drive 下載原檔回 iPad', `「${restored.title}」已重新下載至本機並重設 30 天倒數。`);
+          return ipadLocalDB[id];
+        }
+      } else {
+        if (!state.iphoneTempCache[id]) {
+          const cloudCopy = cloudDriveDB[id] || ipadLocalDB[id];
+          state.iphoneTempCache[id] = JSON.parse(JSON.stringify(cloudCopy));
+        }
+        return state.iphoneTempCache[id];
+      }
+      return null;
+    }
+
+    function commitActiveNoteChange() {
+      const note = getActiveNote();
+      if (!note) return;
+      note.updatedAt = Date.now();
+      note.lastOpenedAt = Date.now();
+
+      const cloudCopy = cloudDriveDB[note.id];
+      const { mergedNote } = mergeNotesCRDT(note, cloudCopy);
+      cloudDriveDB[note.id] = mergedNote;
+
+      if (state.deviceMode === 'ipad') {
+        ipadLocalDB[note.id] = JSON.parse(JSON.stringify(mergedNote));
+      } else {
+        state.iphoneTempCache[note.id] = JSON.parse(JSON.stringify(mergedNote));
+        if (ipadLocalDB[note.id] && !ipadLocalDB[note.id].offloaded) {
+          ipadLocalDB[note.id] = mergeNotesCRDT(ipadLocalDB[note.id], mergedNote).mergedNote;
+        }
+      }
+      saveDatabases();
+      updateStatusBadges();
+      renderSidebarCatalog();
+
+      // 1. Instant Hot-Cache Push to Firestore Middleware (<100ms)
+      if (state.firestoreProjectId && typeof pushNoteToFirestoreMiddleware === 'function') {
+        pushNoteToFirestoreMiddleware(mergedNote);
+      }
+
+      // 2. Automatic Debounced Background Backup to Google Drive via GAS Bridge
+      if (state.gasBridgeUrl && state.gasPasskey) {
+        clearTimeout(window.__gasSaveTimer);
+        window.__gasSaveTimer = setTimeout(() => {
+          fetch(state.gasBridgeUrl, {
+            method: 'POST',
+            body: JSON.stringify({ key: state.gasPasskey, noteId: mergedNote.id, noteData: mergedNote })
+          }).then(() => {
+            logAudit(`[Google Drive 自動備份] 「${mergedNote.title}」已自動存回雲端硬碟。`, 'merge');
+          }).catch(() => {});
+        }, 1200);
+      }
+    }
+
+    /***********************************************************************
+     * PAPER & STROKE RENDERER
+     ***********************************************************************/
+    const bgCanvas = document.getElementById('bg-canvas');
+    const inkCanvas = document.getElementById('ink-canvas');
+    const overlayCanvas = document.getElementById('overlay-canvas');
+    const bgCtx = bgCanvas.getContext('2d');
+    const inkCtx = inkCanvas.getContext('2d');
+    const overlayCtx = overlayCanvas.getContext('2d');
+
+    function drawPaperTemplate(templateName) {
+      const w = bgCanvas.width, h = bgCanvas.height;
+      bgCtx.clearRect(0, 0, w, h);
+      bgCtx.fillStyle = '#FDFBF7';
+      bgCtx.fillRect(0, 0, w, h);
+
+      if (templateName === 'grid') {
+        bgCtx.strokeStyle = 'rgba(148, 163, 184, 0.28)';
+        bgCtx.lineWidth = 1;
+        bgCtx.beginPath();
+        for (let x = 28; x < w; x += 28) { bgCtx.moveTo(x, 0); bgCtx.lineTo(x, h); }
+        for (let y = 28; y < h; y += 28) { bgCtx.moveTo(0, y); bgCtx.lineTo(w, y); }
+        bgCtx.stroke();
+      } else if (templateName === 'ruled') {
+        bgCtx.strokeStyle = 'rgba(239, 68, 68, 0.35)';
+        bgCtx.lineWidth = 1.5;
+        bgCtx.beginPath(); bgCtx.moveTo(76, 0); bgCtx.lineTo(76, h); bgCtx.stroke();
+
+        bgCtx.strokeStyle = 'rgba(148, 163, 184, 0.35)';
+        bgCtx.lineWidth = 1;
+        bgCtx.beginPath();
+        for (let y = 80; y < h - 30; y += 34) { bgCtx.moveTo(0, y); bgCtx.lineTo(w, y); }
+        bgCtx.stroke();
+      } else if (templateName === 'cornell') {
+        bgCtx.strokeStyle = 'rgba(100, 116, 139, 0.45)';
+        bgCtx.lineWidth = 1.5;
+        bgCtx.beginPath();
+        bgCtx.moveTo(28, 90); bgCtx.lineTo(w - 28, 90);
+        bgCtx.moveTo(210, 90); bgCtx.lineTo(210, h - 160);
+        bgCtx.moveTo(28, h - 160); bgCtx.lineTo(w - 28, h - 160);
+        bgCtx.stroke();
+
+        bgCtx.strokeStyle = 'rgba(148, 163, 184, 0.26)';
+        bgCtx.lineWidth = 1;
+        bgCtx.beginPath();
+        for (let y = 126; y < h - 165; y += 32) { bgCtx.moveTo(210, y); bgCtx.lineTo(w - 28, y); }
+        bgCtx.stroke();
+
+        bgCtx.fillStyle = 'rgba(100, 116, 139, 0.65)';
+        bgCtx.font = '600 11px -apple-system, sans-serif';
+        bgCtx.fillText('關鍵字 / 索引欄 (Cues)', 36, 112);
+        bgCtx.fillText('主要手寫筆記區 (Notes)', 225, 112);
+        bgCtx.fillText('本頁總結 (Summary)', 36, h - 140);
+      } else if (templateName === 'dotted') {
+        bgCtx.fillStyle = 'rgba(148, 163, 184, 0.55)';
+        for (let x = 28; x < w; x += 28) {
+          for (let y = 28; y < h; y += 28) {
+            bgCtx.beginPath(); bgCtx.arc(x, y, 1.3, 0, Math.PI * 2); bgCtx.fill();
+          }
+        }
+      }
+    }
+
+    function drawSingleStroke(ctx, stroke, isSelected = false) {
+      if (!stroke || stroke.deleted || !stroke.points || stroke.points.length === 0) return;
+      ctx.save();
+      const pts = stroke.points;
+
+      if (stroke.tool === 'highlighter') {
+        ctx.globalAlpha = 0.36;
+        ctx.globalCompositeOperation = 'multiply';
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        ctx.strokeStyle = stroke.color;
+        ctx.lineWidth = stroke.size;
+        ctx.beginPath();
+        ctx.moveTo(pts[0].x, pts[0].y);
+        for (let i = 1; i < pts.length - 1; i++) {
+          const midX = (pts[i].x + pts[i + 1].x) / 2;
+          const midY = (pts[i].y + pts[i + 1].y) / 2;
+          ctx.quadraticCurveTo(pts[i].x, pts[i].y, midX, midY);
+        }
+        if (pts.length > 1) ctx.lineTo(pts[pts.length - 1].x, pts[pts.length - 1].y);
+        ctx.stroke();
+      } else {
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        ctx.strokeStyle = stroke.color;
+        if (pts.length === 1) {
+          ctx.fillStyle = stroke.color;
+          ctx.beginPath(); ctx.arc(pts[0].x, pts[0].y, stroke.size * 0.6, 0, Math.PI * 2); ctx.fill();
+        } else {
+          for (let i = 1; i < pts.length; i++) {
+            const p0 = pts[i - 1], p1 = pts[i];
+            const pressure = p1.p || 0.65;
+            ctx.lineWidth = Math.max(1.2, stroke.size * (0.55 + pressure * 0.75));
+            ctx.beginPath(); ctx.moveTo(p0.x, p0.y); ctx.lineTo(p1.x, p1.y); ctx.stroke();
+          }
+        }
+      }
+
+      if (isSelected) {
+        ctx.strokeStyle = '#2563EB';
+        ctx.lineWidth = 1.2;
+        ctx.setLineDash([4, 4]);
+        let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+        pts.forEach(p => { minX = Math.min(minX, p.x); minY = Math.min(minY, p.y); maxX = Math.max(maxX, p.x); maxY = Math.max(maxY, p.y); });
+        ctx.strokeRect(minX - 6, minY - 6, (maxX - minX) + 12, (maxY - minY) + 12);
+      }
+      ctx.restore();
+    }
+
+    function renderActivePage() {
+      const note = getActiveNote();
+      if (!note) return;
+
+      document.getElementById('note-title-input').value = note.title;
+      document.getElementById('paper-template-select').value = note.template || 'grid';
+      drawPaperTemplate(note.template || 'grid');
+
+      const page = note.pages[state.currentPageIndex] || note.pages[0];
+      inkCtx.clearRect(0, 0, inkCanvas.width, inkCanvas.height);
+
+      const strokesList = Object.values(page.strokes || {});
+      strokesList.filter(s => !s.deleted && s.tool === 'highlighter').forEach(s => drawSingleStroke(inkCtx, s, state.selectedStrokeIds.has(s.id)));
+      strokesList.filter(s => !s.deleted && s.tool !== 'highlighter').forEach(s => drawSingleStroke(inkCtx, s, state.selectedStrokeIds.has(s.id)));
+
+      Object.values(page.texts || {}).forEach(txt => {
+        if (!txt || txt.deleted) return;
+        inkCtx.save();
+        inkCtx.fillStyle = txt.color || '#1E293B';
+        inkCtx.font = `500 ${txt.fontSize || 16}px -apple-system, BlinkMacSystemFont, "PingFang TC", sans-serif`;
+        String(txt.text).split('\n').forEach((line, idx) => {
+          inkCtx.fillText(line, txt.x, txt.y + idx * ((txt.fontSize || 16) * 1.45));
+        });
+        inkCtx.restore();
+      });
+
+      updateStatusBadges();
+      renderPagePills(note);
+    }
+
+    /***********************************************************************
+     * HARDWARE POINTER SEPARATION ENGINE (Apple Pencil vs Finger + Double Tap)
+     ***********************************************************************/
+    const viewportEl = document.getElementById('canvas-viewport');
+
+    function getCanvasCoords(e) {
+      const rect = inkCanvas.getBoundingClientRect();
+      const scaleX = inkCanvas.width / rect.width;
+      const scaleY = inkCanvas.height / rect.height;
+      return {
+        x: (e.clientX - rect.left) * scaleX,
+        y: (e.clientY - rect.top) * scaleY,
+        p: e.pointerType === 'pen' ? (e.pressure || 0.7) : 0.65
+      };
+    }
+
+    function cancelActiveDrawing() {
+      state.isDrawing = false;
+      state.currentStroke = null;
+      state.lassoPoints = [];
+      state.isDraggingLasso = false;
+      overlayCtx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
+    }
+
+    function getTwoFingerMetrics() {
+      const pts = Array.from(state.activePointers.values());
+      if (pts.length < 2) return null;
+      const p1 = pts[0], p2 = pts[1];
+      return {
+        dist: Math.hypot(p2.clientX - p1.clientX, p2.clientY - p1.clientY),
+        centerX: (p1.clientX + p2.clientX) / 2,
+        centerY: (p1.clientY + p2.clientY) / 2
+      };
+    }
+
+    function startDrawingOrToolAction(e, pt) {
+      const note = getActiveNote();
+      const page = note.pages[state.currentPageIndex];
+
+      if (state.currentTool === 'text') {
+        const content = prompt('輸入要插入筆記的文字內容：', '');
+        if (content && content.trim()) {
+          const txtId = `txt_${state.deviceMode}_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
+          page.texts[txtId] = {
+            id: txtId, x: pt.x, y: pt.y, text: content.trim(),
+            color: state.currentColor, fontSize: 16, updatedAt: Date.now(), deleted: false
+          };
+          state.undoStack.push({ type: 'add_text', id: txtId });
+          commitActiveNoteChange();
+          renderActivePage();
+        }
+        return;
+      }
+
+      if (state.currentTool === 'lasso') {
+        if (state.selectedStrokeIds.size > 0) {
+          state.isDraggingLasso = true;
+          state.lassoDragStart = pt;
+          return;
+        }
+        state.isDrawing = true;
+        state.lassoPoints = [pt];
+        return;
+      }
+
+      if (state.currentTool === 'eraser') {
+        state.isDrawing = true;
+        eraseStrokesNearPoint(pt.x, pt.y);
+        return;
+      }
+
+      state.selectedStrokeIds.clear();
+      state.isDrawing = true;
+      const strokeId = `stk_${state.deviceMode}_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+      state.currentStroke = {
+        id: strokeId,
+        tool: state.currentTool,
+        color: state.currentTool === 'highlighter' && state.currentColor === '#1E293B' ? '#FACC15' : state.currentColor,
+        size: state.currentTool === 'highlighter' ? Math.max(16, state.currentSize * 3.8) : state.currentSize,
+        device: state.deviceMode === 'ipad' ? 'iPad' : 'iPhone',
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+        deleted: false,
+        points: [pt]
+      };
+    }
+
+    inkCanvas.addEventListener('pointerdown', (e) => {
+      e.preventDefault();
+      inkCanvas.setPointerCapture(e.pointerId);
+
+      const hwBadge = document.getElementById('hardware-detect-badge');
+      if (e.pointerType === 'pen') {
+        hwBadge.textContent = '✒️ 已偵測到 Apple Pencil：書寫中（手指自動鎖定為滑動/縮放）';
+      } else if (e.pointerType === 'touch') {
+        hwBadge.textContent = state.fingerAlwaysPan
+          ? '🖐️ 已偵測到手指觸控：自動進入滑動與雙指縮放模式'
+          : '👆 已偵測到手指觸控：目前允許手指寫字（雙指可縮放）';
+      }
+
+      if (e.pointerType === 'pen' && (e.button === 5 || (e.buttons & 32))) {
+        togglePencilEraserDoubleTap();
+      }
+
+      const pt = getCanvasCoords(e);
+      const now = Date.now();
+
+      if (e.pointerType === 'pen' || e.pointerType === 'mouse') {
+        const dt = now - state.lastPencilTapTime;
+        const dist = Math.hypot(pt.x - state.lastPencilTapPos.x, pt.y - state.lastPencilTapPos.y);
+        if (dt > 35 && dt < 330 && dist < 14) {
+          const note = getActiveNote();
+          const page = note.pages[state.currentPageIndex];
+          if (state.lastPencilStrokeId && page.strokes[state.lastPencilStrokeId]) {
+            const prevStroke = page.strokes[state.lastPencilStrokeId];
+            if (prevStroke.points.length <= 4) {
+              delete page.strokes[state.lastPencilStrokeId];
+            }
+          }
+          state.lastPencilTapTime = 0;
+          togglePencilEraserDoubleTap();
+          renderActivePage();
+          return;
+        }
+      }
+
+      state.pointerDownPos = pt;
+      state.pointerDownTime = now;
+
+      if (e.pointerType === 'touch') {
+        state.activePointers.set(e.pointerId, { clientX: e.clientX, clientY: e.clientY });
+
+        if (state.activePointers.size >= 2) {
+          cancelActiveDrawing();
+          state.isPinchingOrPanning = true;
+          const metrics = getTwoFingerMetrics();
+          if (metrics) {
+            state.pinchStartDist = metrics.dist;
+            state.pinchStartScale = state.zoomScale;
+            state.panLastCenter = { x: metrics.centerX, y: metrics.centerY };
+          }
+          return;
+        }
+
+        if (state.fingerAlwaysPan) {
+          cancelActiveDrawing();
+          state.isPinchingOrPanning = true;
+          state.panLastCenter = { x: e.clientX, y: e.clientY };
+          return;
+        }
+      }
+
+      startDrawingOrToolAction(e, pt);
+    });
+
+    inkCanvas.addEventListener('pointermove', (e) => {
+      if (e.pointerType === 'touch' && state.activePointers.has(e.pointerId)) {
+        state.activePointers.set(e.pointerId, { clientX: e.clientX, clientY: e.clientY });
+
+        if (state.activePointers.size >= 2) {
+          cancelActiveDrawing();
+          const metrics = getTwoFingerMetrics();
+          if (metrics && state.pinchStartDist > 10) {
+            const ratio = metrics.dist / state.pinchStartDist;
+            setPaperZoom(state.pinchStartScale * ratio);
+            if (state.panLastCenter) {
+              viewportEl.scrollLeft += (state.panLastCenter.x - metrics.centerX);
+              viewportEl.scrollTop += (state.panLastCenter.y - metrics.centerY);
+            }
+            state.panLastCenter = { x: metrics.centerX, y: metrics.centerY };
+          }
+          return;
+        }
+
+        if (state.isPinchingOrPanning && state.activePointers.size === 1 && state.panLastCenter) {
+          viewportEl.scrollLeft += (state.panLastCenter.x - e.clientX);
+          viewportEl.scrollTop += (state.panLastCenter.y - e.clientY);
+          state.panLastCenter = { x: e.clientX, y: e.clientY };
+          return;
+        }
+      }
+
+      const pt = getCanvasCoords(e);
+
+      if (state.isDraggingLasso && state.lassoDragStart) {
+        const dx = pt.x - state.lassoDragStart.x;
+        const dy = pt.y - state.lassoDragStart.y;
+        state.lassoDragStart = pt;
+        const note = getActiveNote();
+        const page = note.pages[state.currentPageIndex];
+        state.selectedStrokeIds.forEach(id => {
+          const s = page.strokes[id];
+          if (s && !s.deleted) {
+            s.points.forEach(p => { p.x += dx; p.y += dy; });
+            s.updatedAt = Date.now();
+          }
+        });
+        renderActivePage();
+        return;
+      }
+
+      if (!state.isDrawing) return;
+
+      if (state.currentTool === 'eraser') {
+        eraseStrokesNearPoint(pt.x, pt.y);
+        return;
+      }
+
+      if (state.currentTool === 'lasso') {
+        state.lassoPoints.push(pt);
+        overlayCtx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
+        overlayCtx.save();
+        overlayCtx.strokeStyle = '#2563EB';
+        overlayCtx.fillStyle = 'rgba(37, 99, 235, 0.08)';
+        overlayCtx.lineWidth = 1.8;
+        overlayCtx.setLineDash([6, 4]);
+        overlayCtx.beginPath();
+        state.lassoPoints.forEach((p, idx) => idx === 0 ? overlayCtx.moveTo(p.x, p.y) : overlayCtx.lineTo(p.x, p.y));
+        overlayCtx.closePath();
+        overlayCtx.fill();
+        overlayCtx.stroke();
+        overlayCtx.restore();
+        return;
+      }
+
+      if (state.currentStroke) {
+        const events = e.getCoalescedEvents ? e.getCoalescedEvents() : [e];
+        events.forEach(ev => state.currentStroke.points.push(getCanvasCoords(ev)));
+        overlayCtx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
+        drawSingleStroke(overlayCtx, state.currentStroke);
+      }
+    });
+
+    function handlePointerEnd(e) {
+      if (e.pointerType === 'touch') {
+        state.activePointers.delete(e.pointerId);
+        if (state.activePointers.size === 0) {
+          state.isPinchingOrPanning = false;
+          state.panLastCenter = null;
+        } else if (state.activePointers.size === 1 && state.isPinchingOrPanning) {
+          const remaining = Array.from(state.activePointers.values())[0];
+          state.panLastCenter = { x: remaining.clientX, y: remaining.clientY };
+          return;
+        }
+      }
+
+      if (e.pointerType === 'pen' || e.pointerType === 'mouse') {
+        const pt = getCanvasCoords(e);
+        const pressDuration = Date.now() - state.pointerDownTime;
+        const moveDist = Math.hypot(pt.x - state.pointerDownPos.x, pt.y - state.pointerDownPos.y);
+        if (pressDuration < 220 && moveDist < 10) {
+          state.lastPencilTapTime = Date.now();
+          state.lastPencilTapPos = pt;
+        }
+      }
+
+      if (state.isDraggingLasso) {
+        state.isDraggingLasso = false;
+        state.lassoDragStart = null;
+        state.selectedStrokeIds.clear();
+        commitActiveNoteChange();
+        renderActivePage();
+        return;
+      }
+
+      if (!state.isDrawing) return;
+      state.isDrawing = false;
+      overlayCtx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
+
+      const note = getActiveNote();
+      const page = note.pages[state.currentPageIndex];
+
+      if (state.currentTool === 'lasso' && state.lassoPoints.length > 2) {
+        let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+        state.lassoPoints.forEach(p => {
+          minX = Math.min(minX, p.x); minY = Math.min(minY, p.y);
+          maxX = Math.max(maxX, p.x); maxY = Math.max(maxY, p.y);
+        });
+        state.selectedStrokeIds.clear();
+        Object.values(page.strokes).forEach(s => {
+          if (s.deleted) return;
+          if (s.points.some(p => p.x >= minX && p.x <= maxX && p.y >= minY && p.y <= maxY)) {
+            state.selectedStrokeIds.add(s.id);
+          }
+        });
+        state.lassoPoints = [];
+        renderActivePage();
+        if (state.selectedStrokeIds.size > 0) {
+          showToast('🧲', `已圈選 ${state.selectedStrokeIds.size} 筆手寫筆劃`, '直接按住圈選範圍即可拖曳移動位置！');
+        }
+        return;
+      }
+
+      if (state.currentStroke && state.currentStroke.points.length > 0) {
+        page.strokes[state.currentStroke.id] = state.currentStroke;
+        state.lastPencilStrokeId = state.currentStroke.id;
+        state.undoStack.push({ type: 'add_stroke', id: state.currentStroke.id });
+        state.redoStack = [];
+        state.currentStroke = null;
+        commitActiveNoteChange();
+        renderActivePage();
+      }
+    }
+
+    window.addEventListener('pointerup', handlePointerEnd);
+    window.addEventListener('pointercancel', handlePointerEnd);
+
+    function eraseStrokesNearPoint(x, y) {
+      const note = getActiveNote();
+      const page = note.pages[state.currentPageIndex];
+      let erasedAny = false;
+      Object.values(page.strokes).forEach(s => {
+        if (s.deleted) return;
+        if (s.points.some(p => Math.hypot(p.x - x, p.y - y) <= 16)) {
+          s.deleted = true;
+          s.updatedAt = Date.now();
+          state.undoStack.push({ type: 'erase_stroke', id: s.id });
+          erasedAny = true;
+        }
+      });
+      if (erasedAny) {
+        commitActiveNoteChange();
+        renderActivePage();
+      }
+    }
+
+    /***********************************************************************
+     * SIDEBAR CATALOG & UI WIRING
+     ***********************************************************************/
+    function renderSidebarCatalog() {
+      const listEl = document.getElementById('notes-list');
+      listEl.innerHTML = '';
+      const allIds = Array.from(new Set([...Object.keys(cloudDriveDB), ...Object.keys(ipadLocalDB)]));
+
+      allIds.forEach(noteId => {
+        const localCopy = ipadLocalDB[noteId];
+        const cloudCopy = cloudDriveDB[noteId];
+        const meta = localCopy || cloudCopy;
+        if (!meta) return;
+
+        const isCurrent = noteId === state.currentNoteId;
+        const isOffloadedOnIpad = Boolean(localCopy && localCopy.offloaded);
+        const daysAgo = Math.floor((Date.now() - (meta.lastOpenedAt || meta.updatedAt)) / (1000 * 60 * 60 * 24));
+
+        let storageTag = '';
+        if (state.deviceMode === 'ipad') {
+          storageTag = isOffloadedOnIpad
+            ? `<span class="px-1.5 py-0.5 rounded text-[10px] bg-amber-500/15 text-amber-400 border border-amber-500/30">☁️ 已卸載至 Google 雲端</span>`
+            : `<span class="px-1.5 py-0.5 rounded text-[10px] bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">💾 iPad 本機原檔</span>`;
+        } else {
+          const inTemp = Boolean(state.iphoneTempCache[noteId]);
+          storageTag = inTemp
+            ? `<span class="px-1.5 py-0.5 rounded text-[10px] bg-blue-500/15 text-blue-400 border border-blue-500/30">📲 手機已下載暫存</span>`
+            : `<span class="px-1.5 py-0.5 rounded text-[10px] bg-[var(--secondary)] text-[var(--muted-foreground)]">☁️ 點擊從 Google 下載</span>`;
+        }
+
+        const card = document.createElement('button');
+        card.className = `w-full text-left p-2.5 rounded-xl border transition-all ${
+          isCurrent ? 'bg-[var(--secondary)] border-[var(--primary)] shadow-xs' : 'bg-transparent border-transparent hover:bg-[var(--secondary)]/60'
+        }`;
+        card.innerHTML = `
+          <div class="font-semibold text-xs text-[var(--foreground)] truncate">${meta.title}</div>
+          <div class="flex items-center justify-between mt-1.5 gap-1">
+            ${storageTag}
+            <span class="text-[10px] text-[var(--muted-foreground)]">${daysAgo <= 0 ? '今天' : `${daysAgo}天前`}</span>
+          </div>
+        `;
+        card.addEventListener('click', () => {
+          state.currentNoteId = noteId;
+          state.currentPageIndex = 0;
+          state.selectedStrokeIds.clear();
+          renderActivePage();
+          renderSidebarCatalog();
+          if (window.innerWidth < 768) toggleSidebar(false);
+        });
+        listEl.appendChild(card);
+      });
+    }
+
+    function renderPagePills(note) {
+      const container = document.getElementById('page-pills');
+      container.innerHTML = '';
+      document.getElementById('page-indicator').textContent = `第 ${state.currentPageIndex + 1} / ${note.pages.length} 頁`;
+      note.pages.forEach((p, idx) => {
+        const btn = document.createElement('button');
+        btn.className = `px-2.5 py-1 rounded-md text-xs font-mono border ${
+          idx === state.currentPageIndex
+            ? 'bg-[var(--primary)] text-[var(--primary-foreground)] border-[var(--primary)]'
+            : 'bg-[var(--card)] text-[var(--muted-foreground)] border-[var(--border)]'
+        }`;
+        btn.textContent = `P.${idx + 1}`;
+        btn.addEventListener('click', () => {
+          state.currentPageIndex = idx;
+          renderActivePage();
+        });
+        container.appendChild(btn);
+      });
+    }
+
+    function updateStatusBadges() {
+      const note = getActiveNote();
+      if (!note) return;
+      const page = note.pages[state.currentPageIndex] || note.pages[0];
+      const allStrokes = Object.values(page.strokes || {});
+      const activeStrokes = allStrokes.filter(s => !s.deleted).length;
+      const tombstones = allStrokes.filter(s => s.deleted).length;
+
+      document.getElementById('stroke-stats-badge').textContent = `筆劃: ${activeStrokes} | 墓碑: ${tombstones}`;
+
+      const badge = document.getElementById('note-storage-badge');
+      const cloudText = state.gdriveAccessToken ? '☁️ Google Drive 已連線' : '☁️ 模擬雲端';
+      if (state.deviceMode === 'ipad') {
+        badge.className = 'px-2 py-0.5 rounded-full font-medium bg-emerald-500/15 text-emerald-500 border border-emerald-500/30';
+        badge.textContent = `💾 iPad 原檔 + ${cloudText}`;
+      } else {
+        badge.className = 'px-2 py-0.5 rounded-full font-medium bg-blue-500/15 text-blue-400 border border-blue-500/30';
+        badge.textContent = `📲 iPhone 暫存 (${cloudText})`;
+      }
+    }
+
+    function simulateConcurrentDeviceMerge() {
+      const localNote = getActiveNote();
+      if (!localNote) return;
+
+      const remoteClone = JSON.parse(JSON.stringify(cloudDriveDB[localNote.id] || localNote));
+      const page = remoteClone.pages[state.currentPageIndex];
+      const stamp = Date.now();
+      const randY = 680 + Math.floor(Math.random() * 160);
+
+      const remoteStrokeId = `stk_iphone_remote_${stamp}`;
+      page.strokes[remoteStrokeId] = {
+        id: remoteStrokeId, tool: 'pen', color: '#DC2626', size: 3.8, device: 'iPhone',
+        createdAt: stamp, updatedAt: stamp, deleted: false,
+        points: [{ x: 235, y: randY, p: 0.7 }, { x: 310, y: randY - 8, p: 0.8 }, { x: 430, y: randY + 4, p: 0.75 }, { x: 560, y: randY - 3, p: 0.7 }]
+      };
+
+      const remoteTextId = `txt_iphone_remote_${stamp}`;
+      page.texts[remoteTextId] = {
+        id: remoteTextId, x: 235, y: randY - 18,
+        text: `📲 [來自 iPhone 離線新增並合集的筆記 @ ${new Date().toLocaleTimeString('zh-TW', { hour12: false })}]`,
+        color: '#DC2626', fontSize: 15, updatedAt: stamp, deleted: false
+      };
+      remoteClone.updatedAt = stamp;
+
+      const { mergedNote } = mergeNotesCRDT(localNote, remoteClone);
+      cloudDriveDB[localNote.id] = mergedNote;
+      if (state.deviceMode === 'ipad') {
+        ipadLocalDB[localNote.id] = JSON.parse(JSON.stringify(mergedNote));
+      } else {
+        state.iphoneTempCache[localNote.id] = JSON.parse(JSON.stringify(mergedNote));
+      }
+
+      saveDatabases();
+      renderActivePage();
+      logAudit(`[CRDT 無衝突合集 A∪B] 成功合併 iPad 與 iPhone 原檔！新增筆劃: ${remoteStrokeId}`, 'merge');
+      showToast('🔗', '雙端原檔合集 (A ∪ B) 完成！', 'iPad 與 iPhone 兩邊的筆跡已無縫合併成完整的一份！');
+    }
+
+    // Wire up Notability File & Folder Importers + Drag-and-Drop
+    ['input-notability-files', 'input-notability-folder', 'sidebar-notability-files', 'sidebar-notability-folder'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) {
+        el.addEventListener('change', (e) => handleNotabilityFilesUpload(e.target.files));
+      }
+    });
+
+    window.addEventListener('dragover', (e) => e.preventDefault());
+    window.addEventListener('drop', (e) => {
+      e.preventDefault();
+      if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+        handleNotabilityFilesUpload(e.dataTransfer.files);
+      }
+    });
+
+    // UI Event Listeners
+    document.getElementById('btn-toggle-sidebar').addEventListener('click', () => toggleSidebar());
+    document.getElementById('btn-close-sidebar-inside').addEventListener('click', () => toggleSidebar(false));
+    document.getElementById('sidebar-backdrop').addEventListener('click', () => toggleSidebar(false));
+
+    document.getElementById('btn-zoom-in').addEventListener('click', () => setPaperZoom(state.zoomScale + 0.15));
+    document.getElementById('btn-zoom-out').addEventListener('click', () => setPaperZoom(state.zoomScale - 0.15));
+    document.getElementById('btn-zoom-fit').addEventListener('click', () => fitPaperToViewport());
+
+    document.querySelectorAll('[data-tool]').forEach(btn => {
+      btn.addEventListener('click', () => selectTool(btn.dataset.tool, false));
+    });
+
+    document.getElementById('btn-finger-mode').addEventListener('click', () => {
+      state.fingerAlwaysPan = !state.fingerAlwaysPan;
+      const btn = document.getElementById('btn-finger-mode');
+      const label = document.getElementById('finger-mode-label');
+      if (state.fingerAlwaysPan) {
+        label.textContent = '手指=滑動 / Pencil=寫字';
+        btn.className = 'px-2 py-1 rounded-lg text-xs font-medium bg-[var(--primary)] text-[var(--primary-foreground)] flex items-center gap-1 hover:opacity-90';
+        showToast('🖐️', '已啟用「手指自動滑動 / Apple Pencil 寫字」', '用手指碰螢幕只會滑動與縮放；拿 Apple Pencil 碰螢幕會直接寫字！');
+      } else {
+        label.textContent = '手指也可寫字 (雙指縮放)';
+        btn.className = 'px-2 py-1 rounded-lg text-xs font-medium border border-[var(--border)] bg-[var(--secondary)] text-[var(--foreground)] flex items-center gap-1 hover:opacity-90';
+        showToast('👆', '已允許單指寫字', '適合沒帶 Apple Pencil 時用手指臨時補寫筆記（雙指依然可縮放）。');
+      }
+    });
+
+    document.querySelectorAll('[data-color]').forEach(dot => {
+      dot.addEventListener('click', () => {
+        state.currentColor = dot.dataset.color;
+        document.querySelectorAll('[data-color]').forEach(d => d.classList.remove('active'));
+        dot.classList.add('active');
+      });
+    });
+
+    document.querySelectorAll('[data-size]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        state.currentSize = parseFloat(btn.dataset.size);
+        document.querySelectorAll('[data-size]').forEach(b => b.classList.remove('bg-[var(--card)]', 'shadow-xs'));
+        btn.classList.add('bg-[var(--card)]', 'shadow-xs');
+      });
+    });
+
+    document.getElementById('paper-template-select').addEventListener('change', (e) => {
+      const note = getActiveNote();
+      note.template = e.target.value;
+      commitActiveNoteChange();
+      renderActivePage();
+    });
+
+    document.getElementById('note-title-input').addEventListener('change', (e) => {
+      const note = getActiveNote();
+      note.title = e.target.value.trim() || '未命名筆記';
+      commitActiveNoteChange();
+    });
+
+    document.getElementById('btn-add-page').addEventListener('click', () => {
+      const note = getActiveNote();
+      note.pages.push({ pageNumber: note.pages.length + 1, strokes: {}, texts: {} });
+      state.currentPageIndex = note.pages.length - 1;
+      commitActiveNoteChange();
+      renderActivePage();
+    });
+
+    document.getElementById('btn-new-note').addEventListener('click', () => {
+      const id = `note_${Date.now()}`;
+      const newNote = {
+        id, title: `手寫筆記 ${Object.keys(cloudDriveDB).length + 1}`, template: 'grid',
+        createdAt: Date.now(), updatedAt: Date.now(), lastOpenedAt: Date.now(), offloaded: false,
+        pages: [{ pageNumber: 1, strokes: {}, texts: {} }]
+      };
+      cloudDriveDB[id] = newNote;
+      ipadLocalDB[id] = JSON.parse(JSON.stringify(newNote));
+      state.currentNoteId = id;
+      state.currentPageIndex = 0;
+      saveDatabases();
+      renderSidebarCatalog();
+      renderActivePage();
+      if (window.innerWidth < 768) toggleSidebar(false);
+    });
+
+    document.getElementById('btn-undo').addEventListener('click', () => {
+      const last = state.undoStack.pop();
+      if (!last) return;
+      const note = getActiveNote();
+      const page = note.pages[state.currentPageIndex];
+      if (last.type === 'add_stroke' && page.strokes[last.id]) {
+        page.strokes[last.id].deleted = true;
+        page.strokes[last.id].updatedAt = Date.now();
+        state.redoStack.push(last);
+      } else if (last.type === 'erase_stroke' && page.strokes[last.id]) {
+        page.strokes[last.id].deleted = false;
+        page.strokes[last.id].updatedAt = Date.now();
+        state.redoStack.push(last);
+      } else if (last.type === 'add_text' && page.texts[last.id]) {
+        page.texts[last.id].deleted = true;
+        state.redoStack.push(last);
+      }
+      commitActiveNoteChange();
+      renderActivePage();
+    });
+
+    document.getElementById('btn-redo').addEventListener('click', () => {
+      const item = state.redoStack.pop();
+      if (!item) return;
+      const note = getActiveNote();
+      const page = note.pages[state.currentPageIndex];
+      if (item.type === 'add_stroke' && page.strokes[item.id]) {
+        page.strokes[item.id].deleted = false;
+        state.undoStack.push(item);
+      } else if (item.type === 'erase_stroke' && page.strokes[item.id]) {
+        page.strokes[item.id].deleted = true;
+        state.undoStack.push(item);
+      }
+      commitActiveNoteChange();
+      renderActivePage();
+    });
+
+    document.getElementById('mode-ipad').addEventListener('click', () => {
+      state.deviceMode = 'ipad';
+      document.getElementById('mode-ipad').className = 'px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-md font-medium bg-[var(--primary)] text-[var(--primary-foreground)] transition-all';
+      document.getElementById('mode-iphone').className = 'px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-md font-medium text-[var(--muted-foreground)] hover:text-[var(--foreground)] transition-all';
+      renderSidebarCatalog();
+      renderActivePage();
+    });
+
+    document.getElementById('mode-iphone').addEventListener('click', () => {
+      state.deviceMode = 'iphone';
+      state.iphoneTempCache = {};
+      document.getElementById('mode-iphone').className = 'px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-md font-medium bg-[var(--primary)] text-[var(--primary-foreground)] transition-all';
+      document.getElementById('mode-ipad').className = 'px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-md font-medium text-[var(--muted-foreground)] hover:text-[var(--foreground)] transition-all';
+      renderSidebarCatalog();
+      renderActivePage();
+    });
+
+    document.getElementById('btn-run-ttl-cleanup').addEventListener('click', () => runThirtyDayAutoOffload(false));
+    document.getElementById('btn-simulate-conflict').addEventListener('click', simulateConcurrentDeviceMerge);
+    document.getElementById('btn-sim-crdt-modal').addEventListener('click', () => {
+      simulateConcurrentDeviceMerge();
+      document.getElementById('cloud-modal').classList.add('hidden');
+    });
+
+    document.getElementById('btn-sim-35days').addEventListener('click', () => {
+      const id = state.currentNoteId;
+      if (ipadLocalDB[id]) ipadLocalDB[id].lastOpenedAt = Date.now() - (35 * 24 * 60 * 60 * 1000);
+      if (cloudDriveDB[id]) cloudDriveDB[id].lastOpenedAt = Date.now() - (35 * 24 * 60 * 60 * 1000);
+      const otherId = Object.keys(cloudDriveDB).find(k => k !== id) || id;
+      state.currentNoteId = otherId;
+      runThirtyDayAutoOffload(false);
+      document.getElementById('cloud-modal').classList.add('hidden');
+    });
+
+    document.getElementById('btn-open-cloud-modal').addEventListener('click', () => document.getElementById('cloud-modal').classList.remove('hidden'));
+    document.getElementById('btn-close-cloud-modal').addEventListener('click', () => document.getElementById('cloud-modal').classList.add('hidden'));
+
+    document.getElementById('btn-export-json').addEventListener('click', () => {
+      const note = getActiveNote();
+      const blob = new Blob([JSON.stringify(note, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${note.title}.inkflow.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    });
+
+    document.getElementById('input-import-merge').addEventListener('change', (e) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        try {
+          const importedNote = JSON.parse(reader.result);
+          const current = getActiveNote();
+          const { mergedNote } = mergeNotesCRDT(current, importedNote);
+          cloudDriveDB[current.id] = mergedNote;
+          ipadLocalDB[current.id] = JSON.parse(JSON.stringify(mergedNote));
+          saveDatabases();
+          renderActivePage();
+          showToast('🎉', '兩份原檔已成功合集！', '匯入的 JSON 原檔與目前畫面上的筆劃已完成無衝突聯集。');
+        } catch (err) {
+          alert('JSON 原檔格式不正確');
+        }
+      };
+      reader.readAsText(file);
+    });
+
+    async function syncNotabilityFolderFromGDrive() {
+      if (!state.gdriveAccessToken) return;
+      const folderId = state.gdriveFolderId || '1HmVNP7K25JhVuZCHErkvZKlF0AmK0J6O';
+      try {
+        showToast('🔄', '正在掃描你的 Notability 雲端資料夾...', `目標 Folder ID: ${folderId}`);
+        const headers = { Authorization: `Bearer ${state.gdriveAccessToken}` };
+
+        // List all files and subfolders inside 1HmVNP7K25JhVuZCHErkvZKlF0AmK0J6O
+        const q = encodeURIComponent(`'${folderId}' in parents and trashed = false`);
+        const res = await fetch(`https://www.googleapis.com/drive/v3/files?q=${q}&pageSize=100&fields=files(id,name,mimeType)`, { headers });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        const items = data.files || [];
+
+        // Also check 1 level of subject subfolders (Notability often organizes by Subject folders)
+        const allFiles = [...items];
+        for (const item of items) {
+          if (item.mimeType === 'application/vnd.google-apps.folder') {
+            const subQ = encodeURIComponent(`'${item.id}' in parents and trashed = false`);
+            const subRes = await fetch(`https://www.googleapis.com/drive/v3/files?q=${subQ}&pageSize=100&fields=files(id,name,mimeType)`, { headers });
+            if (subRes.ok) {
+              const subData = await subRes.json();
+              allFiles.push(...(subData.files || []));
+            }
+          }
+        }
+
+        let importedCount = 0;
+        let lastId = null;
+
+        for (const f of allFiles) {
+          if (f.name.toLowerCase().endsWith('.note')) {
+            const binRes = await fetch(`https://www.googleapis.com/drive/v3/files/${f.id}?alt=media`, { headers });
+            if (!binRes.ok) continue;
+            const buf = await binRes.arrayBuffer();
+            const unzipped = await unzipNotabilityArchive(buf);
+            const plistKey = Object.keys(unzipped).find(k => k.endsWith('Session.plist')) || Object.keys(unzipped)[0];
+            if (plistKey) {
+              const { note, totalExtractedStrokes, totalPages } = convertNotabilityPlistToInkFlow(f.name, unzipped[plistKey]);
+              note.id = `note_gdrive_${f.id}`;
+              cloudDriveDB[note.id] = note;
+              ipadLocalDB[note.id] = JSON.parse(JSON.stringify(note));
+              lastId = note.id;
+              importedCount++;
+              logAudit(`[雲端 Notability 同步] 已轉換「${f.name}」(${totalPages}頁 / ${totalExtractedStrokes}筆劃)`, 'merge');
+            }
+          } else if (f.name.toLowerCase().endsWith('.inkflow.json')) {
+            const jsonRes = await fetch(`https://www.googleapis.com/drive/v3/files/${f.id}?alt=media`, { headers });
+            if (jsonRes.ok) {
+              const remoteNote = await jsonRes.json();
+              if (remoteNote && remoteNote.id) {
+                const existing = cloudDriveDB[remoteNote.id] || ipadLocalDB[remoteNote.id];
+                const merged = existing ? mergeNotesCRDT(existing, remoteNote).mergedNote : remoteNote;
+                cloudDriveDB[remoteNote.id] = merged;
+                ipadLocalDB[remoteNote.id] = JSON.parse(JSON.stringify(merged));
+                lastId = remoteNote.id;
+                importedCount++;
+              }
+            }
+          }
+        }
+
+        if (lastId) state.currentNoteId = lastId;
+        saveDatabases();
+        renderSidebarCatalog();
+        renderActivePage();
+
+        document.getElementById('gdrive-top-dot').className = 'w-2 h-2 rounded-full bg-emerald-400';
+        document.getElementById('gdrive-top-label').textContent = 'Notability 已連線';
+        document.getElementById('gdrive-modal-status').className = 'px-2 py-0.5 rounded text-[11px] bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 font-medium';
+        document.getElementById('gdrive-modal-status').textContent = `✅ 已連線至 Notability (${importedCount} 份筆記)`;
+        showToast('🎉', `已從雲端 Notability 資料夾同步 ${importedCount} 份筆記！`, '所有 .note 檔皆已自動轉為可擦除、可修改的手寫筆跡！');
+      } catch (err) {
+        logAudit(`[雲端連線錯誤] ${err.message}`, 'ttl');
+        showToast('⚠️', 'Google Drive 讀取失敗', `請確認 Token 有效且具備 drive.readonly 或 drive 權限 (${err.message})`);
+      }
+    }
+
+    // Google Apps Script (GAS) Permanent Auto-Sync Bridge (Protected by Passkey)
+    state.gasBridgeUrl = localStorage.getItem('inkflow_gas_bridge_url') || '';
+    state.gasPasskey = localStorage.getItem('inkflow_gas_passkey') || '';
+    state.firestoreProjectId = localStorage.getItem('inkflow_firestore_project_id') || '';
+    if (state.gasBridgeUrl) document.getElementById('gas-bridge-url-input').value = state.gasBridgeUrl;
+    if (state.gasPasskey) document.getElementById('gas-passkey-input').value = state.gasPasskey;
+    if (state.firestoreProjectId) document.getElementById('firestore-project-input').value = state.firestoreProjectId;
+
+    async function syncViaGasBridge() {
+      if (!state.gasBridgeUrl || !state.gasPasskey) return;
+      try {
+        showToast('⚡', '正在透過加密橋接自動同步 Notability 資料夾...', '驗證你的私人通行密碼中');
+        const listRes = await fetch(`${state.gasBridgeUrl}?action=list&key=${encodeURIComponent(state.gasPasskey)}`);
+        const listData = await listRes.json();
+        if (!listData.ok) throw new Error(listData.error || 'GAS 回傳錯誤');
+
+        let imported = 0;
+        let lastId = null;
+        for (const f of (listData.files || [])) {
+          const itemRes = await fetch(`${state.gasBridgeUrl}?action=get&fileId=${encodeURIComponent(f.id)}&key=${encodeURIComponent(state.gasPasskey)}`);
+          const item = await itemRes.json();
+          if (!item.ok) continue;
+
+          if (item.type === 'note_binary' && item.base64) {
+            const binStr = atob(item.base64);
+            const bytes = new Uint8Array(binStr.length);
+            for (let i = 0; i < binStr.length; i++) bytes[i] = binStr.charCodeAt(i);
+            const unzipped = await unzipNotabilityArchive(bytes.buffer);
+            const plistKey = Object.keys(unzipped).find(k => k.endsWith('Session.plist')) || Object.keys(unzipped)[0];
+            if (plistKey) {
+              const { note } = convertNotabilityPlistToInkFlow(item.name, unzipped[plistKey]);
+              note.id = `note_gas_${f.id}`;
+              cloudDriveDB[note.id] = note;
+              ipadLocalDB[note.id] = JSON.parse(JSON.stringify(note));
+              lastId = note.id;
+              imported++;
+            }
+          } else if (item.type === 'inkflow_json' && item.data) {
+            const remoteNote = item.data;
+            const existing = cloudDriveDB[remoteNote.id] || ipadLocalDB[remoteNote.id];
+            const merged = existing ? mergeNotesCRDT(existing, remoteNote).mergedNote : remoteNote;
+            cloudDriveDB[remoteNote.id] = merged;
+            ipadLocalDB[remoteNote.id] = JSON.parse(JSON.stringify(merged));
+            lastId = remoteNote.id;
+            imported++;
+          }
+        }
+
+        if (lastId) state.currentNoteId = lastId;
+        saveDatabases();
+        renderSidebarCatalog();
+        renderActivePage();
+
+        document.getElementById('gdrive-top-dot').className = 'w-2 h-2 rounded-full bg-emerald-400';
+        document.getElementById('gdrive-top-label').textContent = 'Drive 全自動同步中';
+        document.getElementById('gdrive-modal-status').textContent = `✅ GAS 永久橋接已啟用 (已同步 ${imported} 份筆記)`;
+        showToast('✅', `Google Drive 全自動同步完成 (${imported} 份筆記)`, '往後每寫一筆皆會在背景自動合集並存回你的雲端硬碟！');
+      } catch (err) {
+        logAudit(`[GAS 自動同步錯誤] ${err.message}`, 'ttl');
+        showToast('⚠️', 'GAS 橋接連線失敗', err.message);
+      }
+    }
+
+    // Firestore Hot Middleware REST Sync (Fast <100ms JSON document sync)
+    async function pushNoteToFirestoreMiddleware(note) {
+      if (!state.firestoreProjectId || !note) return;
+      try {
+        const url = `https://firestore.googleapis.com/v1/projects/${encodeURIComponent(state.firestoreProjectId)}/databases/(default)/documents/inkflow_notes/${encodeURIComponent(note.id)}`;
+        await fetch(url, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            fields: {
+              title: { stringValue: note.title },
+              updatedAt: { integerValue: String(note.updatedAt || Date.now()) },
+              payloadJson: { stringValue: JSON.stringify(note) }
+            }
+          })
+        });
+        logAudit(`[Firestore 中介層] 「${note.title}」已即時寫入 Firestore 熱快取！`, 'merge');
+      } catch (e) {}
+    }
+
+    document.getElementById('btn-connect-gas-bridge').addEventListener('click', () => {
+      const url = document.getElementById('gas-bridge-url-input').value.trim();
+      const key = document.getElementById('gas-passkey-input').value.trim();
+      if (!url || !key) return alert('請輸入 Google Apps Script 網址與你的專屬通行密碼');
+      state.gasBridgeUrl = url;
+      state.gasPasskey = key;
+      localStorage.setItem('inkflow_gas_bridge_url', url);
+      localStorage.setItem('inkflow_gas_passkey', key);
+      syncViaGasBridge();
+    });
+
+    document.getElementById('btn-connect-firestore').addEventListener('click', () => {
+      const pid = document.getElementById('firestore-project-input').value.trim();
+      if (!pid) return alert('請輸入 Firebase Project ID');
+      state.firestoreProjectId = pid;
+      localStorage.setItem('inkflow_firestore_project_id', pid);
+      document.getElementById('gdrive-modal-status').textContent = `⚡ Firestore 中介層已啟用 (${pid})`;
+      pushNoteToFirestoreMiddleware(getActiveNote());
+      showToast('⚡', 'Firestore 即時中介層已啟用！', `30 天內活躍筆記將透過 ${pid} 秒速同步，超過 30 天自動封存至 Google Drive。`);
+    });
+
+    document.getElementById('btn-sync-with-token').addEventListener('click', () => {
+      const token = document.getElementById('gdrive-access-token-input').value.trim();
+      if (!token) {
+        alert('請先貼上 Google Access Token');
+        return;
+      }
+      state.gdriveAccessToken = token;
+      localStorage.setItem('inkflow_gdrive_token', token);
+      syncNotabilityFolderFromGDrive();
+    });
+
+    // 1-Click Download standalone index.html for GitHub upload
+    document.getElementById('btn-download-pwa-html')?.addEventListener('click', () => {
+      const htmlContent = '<!DOCTYPE html>\n' + document.documentElement.outerHTML;
+      const blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'index.html';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      showToast('📥', '已下載 index.html！', '直接將此檔案拖進 github.com/CodinSunil/inkflow-notes/upload/main 即可完成部署！');
+    });
+
+    // 1-Click Copy google-drive-bridge.gs script
+    document.getElementById('btn-copy-gas-script')?.addEventListener('click', async () => {
+      const gasCode = `const NOTABILITY_FOLDER_ID = '1HmVNP7K25JhVuZCHErkvZKlF0AmK0J6O';
+const SECRET_PASSKEY = 'inkflow-sunil-2026'; // 請自訂你的專屬通行密碼
+
+function verifyPasskey(reqKey) {
+  return reqKey && reqKey === SECRET_PASSKEY;
+}
+
+function doGet(e) {
+  try {
+    const key = (e && e.parameter && e.parameter.key) || '';
+    if (!verifyPasskey(key)) {
+      return jsonOut({ ok: false, error: '403 Forbidden: 通行密碼錯誤，拒絕存取雲端硬碟' });
+    }
+    const action = (e && e.parameter && e.parameter.action) || 'list';
+    const folder = DriveApp.getFolderById(NOTABILITY_FOLDER_ID);
+    if (action === 'list') {
+      const files = folder.getFiles();
+      const items = [];
+      while (files.hasNext()) {
+        const f = files.next();
+        const name = f.getName();
+        if (name.endsWith('.note') || name.endsWith('.zip') || name.endsWith('.inkflow.json')) {
+          items.push({ id: f.getId(), name: name, updatedAt: f.getLastUpdated().getTime(), size: f.getSize() });
+        }
+      }
+      return jsonOut({ ok: true, folderName: folder.getName(), files: items });
+    }
+    if (action === 'get') {
+      const file = DriveApp.getFileById(e.parameter.fileId);
+      const name = file.getName();
+      if (name.endsWith('.inkflow.json')) {
+        return jsonOut({ ok: true, type: 'inkflow_json', name: name, data: JSON.parse(file.getBlob().getDataAsString('UTF-8')) });
+      } else {
+        return jsonOut({ ok: true, type: 'note_binary', name: name, base64: Utilities.base64Encode(file.getBlob().getBytes()) });
+      }
+    }
+    return jsonOut({ ok: false, error: 'Unknown action' });
+  } catch (err) {
+    return jsonOut({ ok: false, error: String(err) });
+  }
+}
+
+function doPost(e) {
+  try {
+    const payload = JSON.parse(e.postData.contents);
+    if (!verifyPasskey(payload.key)) {
+      return jsonOut({ ok: false, error: '403 Forbidden: 通行密碼錯誤，拒絕寫入雲端硬碟' });
+    }
+    const folder = DriveApp.getFolderById(NOTABILITY_FOLDER_ID);
+    const fileName = (payload.noteData.title || payload.noteId) + '.inkflow.json';
+    const existing = folder.getFilesByName(fileName);
+    const content = JSON.stringify(payload.noteData);
+    if (existing.hasNext()) {
+      const f = existing.next();
+      f.setContent(content);
+      return jsonOut({ ok: true, fileId: f.getId(), updated: true });
+    } else {
+      const f = folder.createFile(fileName, content, MimeType.PLAIN_TEXT);
+      return jsonOut({ ok: true, fileId: f.getId(), created: true });
+    }
+  } catch (err) {
+    return jsonOut({ ok: false, error: String(err) });
+  }
+}
+
+function jsonOut(obj) {
+  return ContentService.createTextOutput(JSON.stringify(obj)).setMimeType(ContentService.MimeType.JSON);
+}`;
+      try {
+        await navigator.clipboard.writeText(gasCode);
+        showToast('📋', '已複製 google-drive-bridge.gs 程式碼！', '請前往 script.google.com 貼上並部署為網頁應用程式。');
+      } catch (err) {
+        alert('複製失敗，請手動複製');
+      }
+    });
+
+    window.addEventListener('resize', () => {
+      applySidebarState();
+      fitPaperToViewport();
+    });
+
+    initDatabases();
+    applySidebarState();
+    renderSidebarCatalog();
+    renderActivePage();
+    fitPaperToViewport();
+    if (state.gasBridgeUrl) {
+      syncViaGasBridge();
+    } else if (state.gdriveAccessToken) {
+      syncNotabilityFolderFromGDrive();
+    }
+  </script>
+
+
+</body></html>
