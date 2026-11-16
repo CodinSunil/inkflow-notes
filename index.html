@@ -307,8 +307,8 @@
       </div>
     </aside>
 
-    <!-- CENTER: SCROLLABLE & PINCH-ZOOMABLE PAPER VIEWPORT (Also supports Drag & Drop .note files!) -->
-    <main id="canvas-viewport" class="flex-1 bg-slate-900/15 dark:bg-black/40 overflow-auto flex flex-col items-center py-3 sm:py-5 px-2 sm:px-4 relative">
+    <!-- CENTER: SCROLLABLE & PINCH-ZOOMABLE PAPER VIEWPORT (Always Centered & Aspect-Locked!) -->
+    <main id="canvas-viewport" class="flex-1 bg-slate-900/15 dark:bg-black/40 overflow-auto flex flex-col py-3 sm:py-5 px-2 sm:px-4 relative">
 
       <!-- Floating Apple Pencil Double-Tap Tool Switch HUD -->
       <div id="pencil-hud" class="opacity-0 fixed top-24 left-1/2 -translate-x-1/2 bg-slate-900/90 text-white px-3.5 py-1.5 rounded-full shadow-xl border border-white/15 text-xs font-semibold flex items-center gap-2 z-50">
@@ -316,13 +316,16 @@
         <span id="pencil-hud-text">點兩下快切：已切換至橡皮擦</span>
       </div>
 
-      <!-- Floating Quick Eraser / Pen Switcher Pill (Draggable & 1-Tap for Thumb or Pencil) -->
+      <!-- Floating Quick Eraser / Pen Switcher Pill (1-Tap Lock OR Hold-for-Spring-Eraser + Draggable) -->
       <button id="floating-eraser-fab" type="button"
-        class="fixed bottom-6 right-5 z-40 px-3.5 py-2 rounded-full shadow-2xl border border-white/20 bg-slate-900/90 backdrop-blur text-white text-xs font-semibold flex items-center gap-2 active:scale-95 transition-transform"
+        class="fixed bottom-6 left-5 z-40 px-4 py-2.5 rounded-2xl shadow-2xl border border-white/25 bg-slate-900/90 backdrop-blur text-white text-xs font-semibold flex items-center gap-2 active:scale-95 transition-transform"
         style="touch-action: none;"
-        title="輕點一下立即切換「畫筆 ↔ 橡皮擦」（可按住拖曳位置；也可直接用筆尖或單指在紙上點兩下切換！）">
-        <span id="fab-tool-icon" class="text-base">🧹</span>
-        <span id="fab-tool-label">點此切橡皮擦 (或紙上點2下)</span>
+        title="【輕點一下】切換畫筆↔橡皮擦 ｜【左手按住不放】暫時變橡皮擦，放開自動回畫筆 ｜【按住拖曳】可移動位置">
+        <span id="fab-tool-icon" class="text-lg">🧹</span>
+        <div class="text-left leading-tight">
+          <div id="fab-tool-label" class="font-bold text-xs">橡皮擦快切</div>
+          <div id="fab-tool-sub" class="text-[10px] text-slate-300">點一下切換 / 按住不放即擦</div>
+        </div>
       </button>
 
       <!-- Live Toast Banner -->
@@ -335,21 +338,21 @@
       </div>
 
       <!-- Compact Status Bar above Paper -->
-      <div class="mb-2 flex flex-wrap items-center justify-center gap-1.5 text-[11px]">
+      <div class="mb-2 mx-auto flex flex-wrap items-center justify-center gap-1.5 text-[11px] shrink-0">
         <span id="note-storage-badge" class="px-2 py-0.5 rounded-full font-medium bg-emerald-500/15 text-emerald-500 border border-emerald-500/30">
           💾 iPad 本機原檔 + ☁️ 模擬雲端
         </span>
         <span id="hardware-detect-badge" class="px-2 py-0.5 rounded-full bg-indigo-500/15 text-indigo-400 border border-indigo-500/30 font-medium">
-          ✒️ 自動感應：Pencil=寫字 / 手指=滑動縮放 / 點兩下=切橡皮擦
+          ✒️ 支援：來回塗抹直接擦字 / 按住左下鍵即擦 / 筆尖或單指點紙2下切橡皮擦
         </span>
         <span id="stroke-stats-badge" class="px-2 py-0.5 rounded-full bg-[var(--card)] text-[var(--muted-foreground)] border border-[var(--border)] font-mono">
           筆劃: 0 | 墓碑: 0
         </span>
       </div>
 
-      <!-- SCALE WRAPPER FOR RESPONSIVE FIT & PINCH ZOOM -->
-      <div id="paper-scale-wrapper" class="relative shrink-0 flex items-start justify-center" style="width: 760px; height: 1020px;">
-        <div id="paper-container" class="paper-sheet relative rounded-xs overflow-hidden" style="width: 760px; height: 1020px;">
+      <!-- SCALE WRAPPER FOR RESPONSIVE FIT & PINCH ZOOM (Always Centered via margin:auto, Never Squished!) -->
+      <div id="paper-scale-wrapper" class="relative shrink-0 m-auto" style="width: 760px; height: 1020px;">
+        <div id="paper-container" class="paper-sheet absolute top-0 left-0 shrink-0 rounded-xs overflow-hidden" style="width: 760px; height: 1020px; min-width: 760px; min-height: 1020px; transform-origin: 0 0;">
           <canvas id="bg-canvas" width="760" height="1020" class="absolute inset-0 pointer-events-none"></canvas>
           <canvas id="ink-canvas" width="760" height="1020" class="absolute inset-0 cursor-crosshair"></canvas>
           <canvas id="overlay-canvas" width="760" height="1020" class="absolute inset-0 pointer-events-none"></canvas>
@@ -1295,19 +1298,28 @@
         activeBtn.className = 'tool-btn active px-2 py-1 rounded-lg text-xs font-medium bg-[var(--primary)] text-[var(--primary-foreground)] flex items-center gap-1';
       }
 
-      // Sync Floating Quick-Switch Pill UI
+      // Sync Floating Quick-Switch Pill UI (preserving any user-dragged position)
       const fab = document.getElementById('floating-eraser-fab');
       const fabIcon = document.getElementById('fab-tool-icon');
       const fabLabel = document.getElementById('fab-tool-label');
+      const fabSub = document.getElementById('fab-tool-sub');
       if (fab && fabIcon && fabLabel) {
         if (toolName === 'eraser') {
-          fab.className = 'fixed bottom-6 right-5 z-40 px-3.5 py-2 rounded-full shadow-2xl border border-amber-300/60 bg-amber-500 text-slate-950 text-xs font-bold flex items-center gap-2 active:scale-95 transition-transform';
+          fab.className = 'fixed bottom-6 left-5 z-40 px-4 py-2.5 rounded-2xl shadow-2xl border-2 border-amber-300 bg-amber-500 text-slate-950 text-xs font-bold flex items-center gap-2 active:scale-95 transition-transform';
           fabIcon.textContent = '🧹';
-          fabLabel.textContent = '橡皮擦中 (點此或紙上點2下回畫筆)';
+          fabLabel.textContent = '目前：橡皮擦模式';
+          if (fabSub) {
+            fabSub.className = 'text-[10px] text-slate-900 font-semibold';
+            fabSub.textContent = '點此或紙上點2下 ➔ 切回畫筆';
+          }
         } else {
-          fab.className = 'fixed bottom-6 right-5 z-40 px-3.5 py-2 rounded-full shadow-2xl border border-white/20 bg-slate-900/90 backdrop-blur text-white text-xs font-semibold flex items-center gap-2 active:scale-95 transition-transform';
+          fab.className = 'fixed bottom-6 left-5 z-40 px-4 py-2.5 rounded-2xl shadow-2xl border border-white/25 bg-slate-900/90 backdrop-blur text-white text-xs font-semibold flex items-center gap-2 active:scale-95 transition-transform';
           fabIcon.textContent = toolName === 'highlighter' ? '🖍️' : (toolName === 'ballpoint' ? '🖋️' : '✒️');
-          fabLabel.textContent = '點此切橡皮擦 (或紙上點2下)';
+          fabLabel.textContent = '橡皮擦快切 (或來回塗抹擦字)';
+          if (fabSub) {
+            fabSub.className = 'text-[10px] text-slate-300';
+            fabSub.textContent = '點一下切換 / 按住不放即擦';
+          }
         }
       }
 
@@ -1368,16 +1380,29 @@
       state.zoomScale = clamped;
       const wrapper = document.getElementById('paper-scale-wrapper');
       const container = document.getElementById('paper-container');
+      const scaledW = Math.round(PAPER_BASE_WIDTH * clamped);
+      const scaledH = Math.round(PAPER_BASE_HEIGHT * clamped);
+
+      // Lock container to base 760x1020 and scale uniformly from (0,0) so it never squishes or deforms
+      container.style.width = `${PAPER_BASE_WIDTH}px`;
+      container.style.height = `${PAPER_BASE_HEIGHT}px`;
+      container.style.transformOrigin = '0 0';
       container.style.transform = `scale(${clamped})`;
-      wrapper.style.width = `${Math.round(PAPER_BASE_WIDTH * clamped)}px`;
-      wrapper.style.height = `${Math.round(PAPER_BASE_HEIGHT * clamped)}px`;
+
+      // Wrapper takes exact scaled bounding box and stays centered via margin: auto
+      wrapper.style.width = `${scaledW}px`;
+      wrapper.style.height = `${scaledH}px`;
       document.getElementById('btn-zoom-fit').textContent = `${Math.round(clamped * 100)}%`;
     }
 
     function fitPaperToViewport() {
       const viewport = document.getElementById('canvas-viewport');
-      const availWidth = viewport.clientWidth - 20;
-      const fitScale = Math.min(1.15, Math.max(0.4, availWidth / PAPER_BASE_WIDTH));
+      const availWidth = Math.max(280, viewport.clientWidth - 24);
+      const availHeight = Math.max(320, viewport.clientHeight - 48);
+      const scaleW = availWidth / PAPER_BASE_WIDTH;
+      const scaleH = availHeight / PAPER_BASE_HEIGHT;
+      // Fit comfortably on screen while keeping aspect ratio 100% locked and centered
+      const fitScale = Math.min(1.12, Math.max(0.4, Math.min(scaleW, scaleH * 1.15)));
       setPaperZoom(fitScale);
     }
 
@@ -2031,13 +2056,83 @@
       return Math.hypot(maxX - minX, maxY - minY);
     }
 
+    // GoodNotes-style Scratch / Scribble-to-Erase detector:
+    // Rubbing the pen back-and-forth (>= 3 sharp reversals) over existing strokes erases them automatically!
+    function detectAndApplyScratchToErase(stroke, page) {
+      if (!stroke || (stroke.tool !== 'pen' && stroke.tool !== 'ballpoint')) return false;
+      const pts = stroke.points;
+      if (!pts || pts.length < 10) return false;
+
+      const simplified = [pts[0]];
+      let totalPathLen = 0;
+      let minX = pts[0].x, maxX = pts[0].x, minY = pts[0].y, maxY = pts[0].y;
+
+      for (let i = 1; i < pts.length; i++) {
+        const p = pts[i];
+        if (p.x < minX) minX = p.x;
+        if (p.x > maxX) maxX = p.x;
+        if (p.y < minY) minY = p.y;
+        if (p.y > maxY) maxY = p.y;
+        totalPathLen += Math.hypot(p.x - pts[i - 1].x, p.y - pts[i - 1].y);
+
+        const lastSimp = simplified[simplified.length - 1];
+        if (Math.hypot(p.x - lastSimp.x, p.y - lastSimp.y) >= 8.0) {
+          simplified.push(p);
+        }
+      }
+
+      const bboxDiag = Math.hypot(maxX - minX, maxY - minY);
+      if (bboxDiag < 12 || bboxDiag > 420 || simplified.length < 5) return false;
+
+      let sharpReversals = 0;
+      for (let i = 1; i < simplified.length - 1; i++) {
+        const p0 = simplified[i - 1];
+        const p1 = simplified[i];
+        const p2 = simplified[i + 1];
+        const v1x = p1.x - p0.x, v1y = p1.y - p0.y;
+        const v2x = p2.x - p1.x, v2y = p2.y - p1.y;
+        const len1 = Math.hypot(v1x, v1y);
+        const len2 = Math.hypot(v2x, v2y);
+        if (len1 >= 7.5 && len2 >= 7.5) {
+          const cosAngle = (v1x * v2x + v1y * v2y) / (len1 * len2);
+          if (cosAngle < -0.42) {
+            sharpReversals++;
+          }
+        }
+      }
+
+      if (sharpReversals < 3 || (totalPathLen / bboxDiag) < 2.15) return false;
+
+      const pad = 12;
+      const erasedIds = [];
+      Object.values(page.strokes || {}).forEach(existing => {
+        if (!existing || existing.deleted || existing.id === stroke.id) return;
+        const hit = existing.points && existing.points.some(ep => {
+          if (ep.x < minX - pad || ep.x > maxX + pad || ep.y < minY - pad || ep.y > maxY + pad) return false;
+          return pts.some(sp => Math.hypot(ep.x - sp.x, ep.y - sp.y) <= 20);
+        });
+        if (hit) {
+          existing.deleted = true;
+          existing.updatedAt = Date.now();
+          erasedIds.push(existing.id);
+        }
+      });
+
+      if (erasedIds.length === 0) return false;
+
+      state.undoStack.push({ type: 'scratch_erase', ids: erasedIds });
+      state.redoStack = [];
+      showPencilHud('🧹', `來回塗抹擦除：已直接擦掉 ${erasedIds.length} 筆舊字跡（保持畫筆模式）`);
+      return true;
+    }
+
     inkCanvas.addEventListener('pointerdown', (e) => {
       e.preventDefault();
       inkCanvas.setPointerCapture(e.pointerId);
 
       const hwBadge = document.getElementById('hardware-detect-badge');
       if (e.pointerType === 'pen') {
-        hwBadge.textContent = '✒️ Apple Pencil 書寫中（筆尖點紙2下 或 單指點2下 = 秒切橡皮擦）';
+        hwBadge.textContent = '✒️ Apple Pencil：來回塗抹=直接擦字 / 筆尖或單指點2下=切橡皮擦 / 左下鍵按住即擦';
       } else if (e.pointerType === 'touch') {
         hwBadge.textContent = state.fingerAlwaysPan
           ? '🖐️ 手指觸控：單指滑動 / 雙指縮放 / 單指輕點2下=切橡皮擦'
@@ -2056,12 +2151,12 @@
       if (e.pointerType === 'pen' || e.pointerType === 'mouse') {
         const dt = now - state.lastPencilTapTime;
         const dist = Math.hypot(pt.x - state.lastPencilTapPos.x, pt.y - state.lastPencilTapPos.y);
-        if (dt >= 15 && dt < 480 && dist < 42) {
+        if (dt >= 15 && dt < 560 && dist < 68) {
           const note = getActiveNote();
           const page = note.pages[state.currentPageIndex];
           if (state.lastPencilStrokeId && page.strokes[state.lastPencilStrokeId]) {
             const prevStroke = page.strokes[state.lastPencilStrokeId];
-            if (getStrokeBoundingSpan(prevStroke) <= 24) {
+            if (getStrokeBoundingSpan(prevStroke) <= 38) {
               delete page.strokes[state.lastPencilStrokeId];
               if (state.undoStack.length > 0 && state.undoStack[state.undoStack.length - 1].id === state.lastPencilStrokeId) {
                 state.undoStack.pop();
@@ -2218,10 +2313,10 @@
           const now = Date.now();
           const touchDuration = now - state.touchDownTime;
           const touchMoveDist = Math.hypot(e.clientX - state.touchDownPos.x, e.clientY - state.touchDownPos.y);
-          if (touchDuration < 260 && touchMoveDist < 16) {
+          if (touchDuration < 320 && touchMoveDist < 26) {
             const dt = now - state.lastTouchTapTime;
             const distFromLastTap = Math.hypot(e.clientX - state.lastTouchTapPos.x, e.clientY - state.lastTouchTapPos.y);
-            if (dt >= 25 && dt < 420 && distFromLastTap < 45) {
+            if (dt >= 20 && dt < 520 && distFromLastTap < 72) {
               state.lastTouchTapTime = 0;
               togglePencilEraserDoubleTap('🖐️ 單指點兩下');
             } else {
@@ -2245,7 +2340,7 @@
         const pt = getCanvasCoords(e);
         const pressDuration = Date.now() - state.pointerDownTime;
         const moveDist = Math.hypot(pt.x - state.pointerDownPos.x, pt.y - state.pointerDownPos.y);
-        if (pressDuration < 280 && moveDist < 22) {
+        if (pressDuration < 340 && moveDist < 38) {
           state.lastPencilTapTime = Date.now();
           state.lastPencilTapPos = pt;
         }
@@ -2289,6 +2384,14 @@
       }
 
       if (state.currentStroke && state.currentStroke.points.length > 0) {
+        // Check if this stroke is a GoodNotes-style back-and-forth Scratch-to-Erase gesture!
+        if (detectAndApplyScratchToErase(state.currentStroke, page)) {
+          state.currentStroke = null;
+          commitActiveNoteChange();
+          renderActivePage();
+          return;
+        }
+
         page.strokes[state.currentStroke.id] = state.currentStroke;
         state.lastPencilStrokeId = state.currentStroke.id;
         state.undoStack.push({ type: 'add_stroke', id: state.currentStroke.id });
@@ -2482,13 +2585,20 @@
       btn.addEventListener('click', () => selectTool(btn.dataset.tool, false));
     });
 
-    // Floating Quick Eraser / Pen Switcher Pill (1-Tap Toggle + Drag anywhere on screen)
+    // Floating Quick Eraser / Pen Switcher Pill:
+    // - Quick Tap (<260ms): Toggle & Lock Eraser <-> Pen
+    // - Press & Hold (>=260ms): Spring-Loaded Eraser (erases while held, automatically returns to Pen when released!)
+    // - Drag (>10px): Move button anywhere on screen
     (() => {
       const fab = document.getElementById('floating-eraser-fab');
       if (!fab) return;
       let isDraggingFab = false;
       let fabMoved = false;
       let startX = 0, startY = 0, origLeft = 0, origTop = 0;
+      let pressStartTime = 0;
+      let toolBeforeHold = null;
+      let holdSpringActive = false;
+      let holdTimer = null;
 
       fab.addEventListener('pointerdown', (e) => {
         e.preventDefault();
@@ -2496,19 +2606,35 @@
         fab.setPointerCapture(e.pointerId);
         isDraggingFab = true;
         fabMoved = false;
+        pressStartTime = Date.now();
+        toolBeforeHold = state.currentTool;
+        holdSpringActive = false;
         const rect = fab.getBoundingClientRect();
         startX = e.clientX;
         startY = e.clientY;
         origLeft = rect.left;
         origTop = rect.top;
+
+        clearTimeout(holdTimer);
+        holdTimer = setTimeout(() => {
+          if (isDraggingFab && !fabMoved && toolBeforeHold !== 'eraser') {
+            holdSpringActive = true;
+            selectTool('eraser', true, '🖐️ 按住瞬時橡皮擦（放開回畫筆）');
+          }
+        }, 240);
       });
 
       fab.addEventListener('pointermove', (e) => {
         if (!isDraggingFab) return;
         const dx = e.clientX - startX;
         const dy = e.clientY - startY;
-        if (Math.hypot(dx, dy) > 8) {
+        if (Math.hypot(dx, dy) > 10) {
           fabMoved = true;
+          clearTimeout(holdTimer);
+          if (holdSpringActive && toolBeforeHold) {
+            holdSpringActive = false;
+            selectTool(toolBeforeHold, false);
+          }
           const nextLeft = Math.max(8, Math.min(window.innerWidth - fab.offsetWidth - 8, origLeft + dx));
           const nextTop = Math.max(54, Math.min(window.innerHeight - fab.offsetHeight - 8, origTop + dy));
           fab.style.right = 'auto';
@@ -2521,13 +2647,27 @@
       const endFab = (e) => {
         if (!isDraggingFab) return;
         isDraggingFab = false;
-        if (!fabMoved) {
+        clearTimeout(holdTimer);
+        if (fabMoved) return;
+
+        if (holdSpringActive) {
+          holdSpringActive = false;
+          selectTool(state.previousDrawTool || 'pen', true, '✒️ 放開快切鍵');
+        } else {
           togglePencilEraserDoubleTap('⚡ 懸浮快切鍵');
         }
       };
       fab.addEventListener('pointerup', endFab);
       fab.addEventListener('pointercancel', endFab);
     })();
+
+    // Support URL hash #toggle-eraser for Apple Pencil Pro Squeeze -> iOS Shortcut integration
+    window.addEventListener('hashchange', () => {
+      if (location.hash === '#toggle-eraser' || location.hash === '#eraser') {
+        togglePencilEraserDoubleTap('⚡ Apple Pencil 捷徑');
+        history.replaceState(null, '', location.pathname + location.search);
+      }
+    });
 
     document.getElementById('btn-finger-mode').addEventListener('click', () => {
       state.fingerAlwaysPan = !state.fingerAlwaysPan;
@@ -2611,6 +2751,14 @@
         page.strokes[last.id].deleted = false;
         page.strokes[last.id].updatedAt = Date.now();
         state.redoStack.push(last);
+      } else if (last.type === 'scratch_erase' && Array.isArray(last.ids)) {
+        last.ids.forEach(id => {
+          if (page.strokes[id]) {
+            page.strokes[id].deleted = false;
+            page.strokes[id].updatedAt = Date.now();
+          }
+        });
+        state.redoStack.push(last);
       } else if (last.type === 'add_text' && page.texts[last.id]) {
         page.texts[last.id].deleted = true;
         state.redoStack.push(last);
@@ -2629,6 +2777,14 @@
         state.undoStack.push(item);
       } else if (item.type === 'erase_stroke' && page.strokes[item.id]) {
         page.strokes[item.id].deleted = true;
+        state.undoStack.push(item);
+      } else if (item.type === 'scratch_erase' && Array.isArray(item.ids)) {
+        item.ids.forEach(id => {
+          if (page.strokes[id]) {
+            page.strokes[id].deleted = true;
+            page.strokes[id].updatedAt = Date.now();
+          }
+        });
         state.undoStack.push(item);
       }
       commitActiveNoteChange();
