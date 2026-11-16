@@ -1310,12 +1310,12 @@
           fabLabel.textContent = '目前：橡皮擦模式';
           if (fabSub) {
             fabSub.className = 'text-[10px] text-slate-900 font-semibold';
-            fabSub.textContent = '點此或紙上點2下 ➔ 切回畫筆';
+            fabSub.textContent = '點此或單指點2下 ➔ 切回畫筆';
           }
         } else {
           fab.className = 'fixed bottom-6 left-5 z-40 px-4 py-2.5 rounded-2xl shadow-2xl border border-white/25 bg-slate-900/90 backdrop-blur text-white text-xs font-semibold flex items-center gap-2 active:scale-95 transition-transform';
           fabIcon.textContent = toolName === 'highlighter' ? '🖍️' : (toolName === 'ballpoint' ? '🖋️' : '✒️');
-          fabLabel.textContent = '橡皮擦快切 (或來回塗抹擦字)';
+          fabLabel.textContent = '橡皮擦快切 (或原地塗黑擦字)';
           if (fabSub) {
             fabSub.className = 'text-[10px] text-slate-300';
             fabSub.textContent = '點一下切換 / 按住不放即擦';
@@ -2056,12 +2056,16 @@
       return Math.hypot(maxX - minX, maxY - minY);
     }
 
-    // GoodNotes-style Scratch / Scribble-to-Erase detector:
-    // Rubbing the pen back-and-forth (>= 3 sharp reversals) over existing strokes erases them automatically!
+    // GoodNotes-style Scratch / Scribble-to-Erase detector (Calibrated to NEVER false-trigger on cursive/connected writing!):
+    // Requires:
+    // 1. >= 5 ultra-sharp ~180° back-and-forth reversals (cosAngle < -0.76, i.e., > 140° turn)
+    // 2. Overlapping back-and-forth segments in the same spot (not progressing like cursive writing)
+    // 3. High stroke density (totalPathLen / bboxDiag >= 3.6)
+    // 4. Must cover at least 45% of an existing stroke's points (never triggers from just touching a stroke edge!)
     function detectAndApplyScratchToErase(stroke, page) {
       if (!stroke || (stroke.tool !== 'pen' && stroke.tool !== 'ballpoint')) return false;
       const pts = stroke.points;
-      if (!pts || pts.length < 10) return false;
+      if (!pts || pts.length < 22) return false;
 
       const simplified = [pts[0]];
       let totalPathLen = 0;
@@ -2076,15 +2080,19 @@
         totalPathLen += Math.hypot(p.x - pts[i - 1].x, p.y - pts[i - 1].y);
 
         const lastSimp = simplified[simplified.length - 1];
-        if (Math.hypot(p.x - lastSimp.x, p.y - lastSimp.y) >= 8.0) {
+        if (Math.hypot(p.x - lastSimp.x, p.y - lastSimp.y) >= 10.0) {
           simplified.push(p);
         }
       }
 
       const bboxDiag = Math.hypot(maxX - minX, maxY - minY);
-      if (bboxDiag < 12 || bboxDiag > 420 || simplified.length < 5) return false;
+      if (bboxDiag < 16 || bboxDiag > 360 || simplified.length < 7) return false;
+
+      // Require high overlap density (total path at least 3.6x the bounding box diagonal)
+      if ((totalPathLen / bboxDiag) < 3.6) return false;
 
       let sharpReversals = 0;
+      let overlappingReversals = 0;
       for (let i = 1; i < simplified.length - 1; i++) {
         const p0 = simplified[i - 1];
         const p1 = simplified[i];
@@ -2093,25 +2101,44 @@
         const v2x = p2.x - p1.x, v2y = p2.y - p1.y;
         const len1 = Math.hypot(v1x, v1y);
         const len2 = Math.hypot(v2x, v2y);
-        if (len1 >= 7.5 && len2 >= 7.5) {
+        if (len1 >= 12 && len2 >= 12) {
           const cosAngle = (v1x * v2x + v1y * v2y) / (len1 * len2);
-          if (cosAngle < -0.42) {
+          // Strict ~180-degree reversal (turn angle > 140 degrees)
+          if (cosAngle < -0.76) {
             sharpReversals++;
+            // Check that the two legs actually fold back over the same center (not advancing like cursive)
+            const mid1X = (p0.x + p1.x) * 0.5, mid1Y = (p0.y + p1.y) * 0.5;
+            const mid2X = (p1.x + p2.x) * 0.5, mid2Y = (p1.y + p2.y) * 0.5;
+            const midDist = Math.hypot(mid2X - mid1X, mid2Y - mid1Y);
+            const avgLen = (len1 + len2) * 0.5;
+            if (midDist < avgLen * 0.58) {
+              overlappingReversals++;
+            }
           }
         }
       }
 
-      if (sharpReversals < 3 || (totalPathLen / bboxDiag) < 2.15) return false;
+      // Require at least 5 sharp ~180° reversals AND at least 4 overlapping fold-backs
+      if (sharpReversals < 5 || overlappingReversals < 4) return false;
 
-      const pad = 12;
+      const pad = 10;
       const erasedIds = [];
       Object.values(page.strokes || {}).forEach(existing => {
         if (!existing || existing.deleted || existing.id === stroke.id) return;
-        const hit = existing.points && existing.points.some(ep => {
-          if (ep.x < minX - pad || ep.x > maxX + pad || ep.y < minY - pad || ep.y > maxY + pad) return false;
-          return pts.some(sp => Math.hypot(ep.x - sp.x, ep.y - sp.y) <= 20);
-        });
-        if (hit) {
+        const ePts = existing.points;
+        if (!ePts || ePts.length === 0) return;
+
+        let coveredCount = 0;
+        for (let i = 0; i < ePts.length; i++) {
+          const ep = ePts[i];
+          if (ep.x < minX - pad || ep.x > maxX + pad || ep.y < minY - pad || ep.y > maxY + pad) continue;
+          if (pts.some(sp => Math.hypot(ep.x - sp.x, ep.y - sp.y) <= 16)) {
+            coveredCount++;
+          }
+        }
+        const coverageRatio = coveredCount / ePts.length;
+        // Must cover at least 45% of the target stroke (or >= 12 points for very long strokes)
+        if (coverageRatio >= 0.45 || coveredCount >= 14) {
           existing.deleted = true;
           existing.updatedAt = Date.now();
           erasedIds.push(existing.id);
@@ -2122,7 +2149,7 @@
 
       state.undoStack.push({ type: 'scratch_erase', ids: erasedIds });
       state.redoStack = [];
-      showPencilHud('🧹', `來回塗抹擦除：已直接擦掉 ${erasedIds.length} 筆舊字跡（保持畫筆模式）`);
+      showPencilHud('🧹', `密集塗抹擦除：已擦掉 ${erasedIds.length} 筆舊字跡（保持畫筆模式）`);
       return true;
     }
 
@@ -2132,10 +2159,10 @@
 
       const hwBadge = document.getElementById('hardware-detect-badge');
       if (e.pointerType === 'pen') {
-        hwBadge.textContent = '✒️ Apple Pencil：來回塗抹=直接擦字 / 筆尖或單指點2下=切橡皮擦 / 左下鍵按住即擦';
+        hwBadge.textContent = '✒️ Apple Pencil 書寫中（單指點紙2下 或 左下角按鈕 = 切橡皮擦 / 密集塗黑 = 擦字）';
       } else if (e.pointerType === 'touch') {
         hwBadge.textContent = state.fingerAlwaysPan
-          ? '🖐️ 手指觸控：單指滑動 / 雙指縮放 / 單指輕點2下=切橡皮擦'
+          ? '🖐️ 手指觸控：單指滑動 / 雙指縮放 / 單指點2下=切橡皮擦'
           : '👆 手指觸控：目前允許手指寫字（雙指可縮放）';
       }
 
@@ -2146,33 +2173,6 @@
 
       const pt = getCanvasCoords(e);
       const now = Date.now();
-
-      // 1. Apple Pencil Tip (or Mouse) Double-Tap on Canvas -> Toggle Eraser & clean up 1st tap dot
-      if (e.pointerType === 'pen' || e.pointerType === 'mouse') {
-        const dt = now - state.lastPencilTapTime;
-        const dist = Math.hypot(pt.x - state.lastPencilTapPos.x, pt.y - state.lastPencilTapPos.y);
-        if (dt >= 15 && dt < 560 && dist < 68) {
-          const note = getActiveNote();
-          const page = note.pages[state.currentPageIndex];
-          if (state.lastPencilStrokeId && page.strokes[state.lastPencilStrokeId]) {
-            const prevStroke = page.strokes[state.lastPencilStrokeId];
-            if (getStrokeBoundingSpan(prevStroke) <= 38) {
-              delete page.strokes[state.lastPencilStrokeId];
-              if (state.undoStack.length > 0 && state.undoStack[state.undoStack.length - 1].id === state.lastPencilStrokeId) {
-                state.undoStack.pop();
-              }
-              commitActiveNoteChange();
-            }
-          }
-          state.lastPencilTapTime = 0;
-          state.lastPencilStrokeId = null;
-          cancelActiveDrawing();
-          togglePencilEraserDoubleTap('✒️ 筆尖點紙兩下');
-          renderActivePage();
-          return;
-        }
-      }
-
       state.pointerDownPos = pt;
       state.pointerDownTime = now;
 
