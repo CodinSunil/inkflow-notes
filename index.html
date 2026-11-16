@@ -2065,10 +2065,10 @@
       return Math.hypot(px - (x1 + t * dx), py - (y1 + t * dy));
     }
 
-    function isStrokeHitByScratch(existingStroke, scratchPts, minX, maxX, minY, maxY) {
+    function isStrokeHitByScratch(existingStroke, scratchPts, scratchLegs, minX, maxX, minY, maxY) {
       const ePts = existingStroke.points;
       if (!ePts || ePts.length === 0) return false;
-      const pad = 20;
+      const pad = 12;
 
       // Quick bounding box rejection
       let eMinX = Infinity, eMaxX = -Infinity, eMinY = Infinity, eMaxY = -Infinity;
@@ -2083,35 +2083,53 @@
         return false;
       }
 
-      // Check how many scratch points pass close to the existing stroke's segments
-      let scratchHits = 0;
-      const step = Math.max(1, Math.floor(scratchPts.length / 24));
-      for (let s = 0; s < scratchPts.length; s += step) {
-        const sp = scratchPts[s];
-        let hitThisSample = false;
-        if (ePts.length === 1) {
-          if (Math.hypot(sp.x - ePts[0].x, sp.y - ePts[0].y) <= 22) hitThisSample = true;
-        } else {
-          for (let i = 1; i < ePts.length; i++) {
-            if (pointToSegmentDist(sp.x, sp.y, ePts[i - 1].x, ePts[i - 1].y, ePts[i].x, ePts[i].y) <= 20) {
-              hitThisSample = true;
-              break;
-            }
+      // 1. Check how much of the existing stroke is actually covered by the scratch (within 12px)
+      let coveredTargetPts = 0;
+      for (let i = 0; i < ePts.length; i++) {
+        const ep = ePts[i];
+        let close = false;
+        for (let s = 0; s < scratchPts.length; s += 2) {
+          if (Math.hypot(ep.x - scratchPts[s].x, ep.y - scratchPts[s].y) <= 13) {
+            close = true;
+            break;
           }
         }
-        if (hitThisSample) scratchHits++;
+        if (close) coveredTargetPts++;
+      }
+      const targetCoverage = coveredTargetPts / ePts.length;
+
+      // 2. Check how many distinct back-and-forth legs of the scratch directly cross the existing stroke (within 12px)
+      let legsCrossingTarget = 0;
+      for (const leg of scratchLegs) {
+        let legHit = false;
+        for (let idx = leg.startIdx; idx <= leg.endIdx; idx += 2) {
+          const sp = scratchPts[idx];
+          if (ePts.length === 1) {
+            if (Math.hypot(sp.x - ePts[0].x, sp.y - ePts[0].y) <= 13) { legHit = true; break; }
+          } else {
+            for (let i = 1; i < ePts.length; i++) {
+              if (pointToSegmentDist(sp.x, sp.y, ePts[i - 1].x, ePts[i - 1].y, ePts[i].x, ePts[i].y) <= 12) {
+                legHit = true;
+                break;
+              }
+            }
+          }
+          if (legHit) break;
+        }
+        if (legHit) legsCrossingTarget++;
       }
 
-      // Require at least 2 distinct passes of the scratch stroke hitting the target stroke
-      return scratchHits >= 2;
+      // Require that at least 3 separate back-and-forth legs directly cross the target stroke
+      // AND at least 50% of the target stroke (or >= 4 legs crossing for long lines) is covered!
+      return legsCrossingTarget >= 3 && (targetCoverage >= 0.50 || legsCrossingTarget >= 4);
     }
 
-    // GoodNotes-style Scratch / Scribble-to-Erase detector (Multi-Axis 1D Hysteresis Extrema Algorithm):
-    // Immune to rounded turnaround corners from Streamline smoothing, while rejecting cursive writing!
+    // GoodNotes-style Scratch / Scribble-to-Erase detector:
+    // Strictly separates 1D stationary scrubbing from 2D cursive / connected Chinese handwriting!
     function detectAndApplyScratchToErase(stroke, page) {
       if (!stroke || (stroke.tool !== 'pen' && stroke.tool !== 'ballpoint')) return false;
       const pts = stroke.points;
-      if (!pts || pts.length < 10) return false;
+      if (!pts || pts.length < 18) return false;
 
       let totalPathLen = 0;
       let minX = pts[0].x, maxX = pts[0].x, minY = pts[0].y, maxY = pts[0].y;
@@ -2125,41 +2143,72 @@
       }
 
       const bboxDiag = Math.hypot(maxX - minX, maxY - minY);
-      if (bboxDiag < 10 || bboxDiag > 520) return false;
-      if ((totalPathLen / bboxDiag) < 2.05) return false;
+      if (bboxDiag < 14 || bboxDiag > 480) return false;
+      if ((totalPathLen / bboxDiag) < 2.65) return false;
+
+      // Key Anti-Cursive Law 1: First-Half vs Second-Half Centroid Stationarity!
+      // When writing ANY character or word in cursive (top-to-bottom or left-to-right),
+      // the 1st half of the stroke and 2nd half of the stroke are in different places.
+      // When scrubbing a mistake out in place, the 1st half and 2nd half overlap on the same spot!
+      const halfIdx = Math.floor(pts.length / 2);
+      let c1x = 0, c1y = 0, c2x = 0, c2y = 0;
+      for (let i = 0; i < halfIdx; i++) { c1x += pts[i].x; c1y += pts[i].y; }
+      c1x /= halfIdx; c1y /= halfIdx;
+      const rem = pts.length - halfIdx;
+      for (let i = halfIdx; i < pts.length; i++) { c2x += pts[i].x; c2y += pts[i].y; }
+      c2x /= rem; c2y /= rem;
+      const halfCentroidDist = Math.hypot(c2x - c1x, c2y - c1y);
+      if (halfCentroidDist > bboxDiag * 0.28) {
+        return false; // Stroke is progressing in a direction (cursive writing), NOT scrubbing in place!
+      }
 
       // Test 4 candidate scratch axes: 0° (horizontal), 35°, 90° (vertical), 145°
       const angles = [0, (35 * Math.PI) / 180, Math.PI / 2, (145 * Math.PI) / 180];
-      let isScratchGesture = false;
+      let matchedLegs = null;
 
       for (const ang of angles) {
         const cosA = Math.cos(ang);
         const sinA = Math.sin(ang);
 
         let minU = Infinity, maxU = -Infinity;
+        let minV = Infinity, maxV = -Infinity;
+        let travelU = 0, travelV = 0;
         const uArr = new Float32Array(pts.length);
 
         for (let i = 0; i < pts.length; i++) {
           const u = pts[i].x * cosA + pts[i].y * sinA;
+          const v = -pts[i].x * sinA + pts[i].y * cosA;
           uArr[i] = u;
           if (u < minU) minU = u;
           if (u > maxU) maxU = u;
+          if (v < minV) minV = v;
+          if (v > maxV) maxV = v;
+          if (i > 0) {
+            const prevU = pts[i - 1].x * cosA + pts[i - 1].y * sinA;
+            const prevV = -pts[i - 1].x * sinA + pts[i - 1].y * cosA;
+            travelU += Math.abs(u - prevU);
+            travelV += Math.abs(v - prevV);
+          }
         }
 
         const spanU = maxU - minU;
-        if (spanU < 10) continue;
+        const spanV = maxV - minV;
+        if (spanU < 14) continue;
 
-        // Hysteresis swing threshold: each back-and-forth stroke must cover at least 30% of the scratch width (min 8px)
-        const minSwing = Math.max(8, spanU * 0.30);
+        // Key Anti-Cursive Law 2: The scrub axis U must be the dominant axis of motion!
+        // Rejects horizontal cursive oscillating slightly in Y, or vertical Chinese characters oscillating in X.
+        if (spanU < spanV * 1.05 || travelU < travelV * 2.15) continue;
 
-        let dir = 0; // +1 increasing, -1 decreasing
+        const minSwing = Math.max(12, spanU * 0.42);
+
+        let dir = 0;
         let anchorIdx = 0;
         let extremeIdx = 0;
         let anchorU = uArr[0];
         let extremeU = uArr[0];
         let reversals = 0;
         let totalSwing = 0;
-        const legs = []; // Each leg stores { midX, midY, lenU }
+        const legs = [];
 
         for (let i = 1; i < pts.length; i++) {
           const u = uArr[i];
@@ -2181,11 +2230,7 @@
               reversals++;
               const swing = extremeU - anchorU;
               totalSwing += swing;
-              legs.push({
-                midX: (pts[anchorIdx].x + pts[extremeIdx].x) * 0.5,
-                midY: (pts[anchorIdx].y + pts[extremeIdx].y) * 0.5,
-                swing
-              });
+              legs.push({ startIdx: anchorIdx, endIdx: extremeIdx, swing });
               anchorU = extremeU;
               anchorIdx = extremeIdx;
               extremeU = u;
@@ -2200,11 +2245,7 @@
               reversals++;
               const swing = anchorU - extremeU;
               totalSwing += swing;
-              legs.push({
-                midX: (pts[anchorIdx].x + pts[extremeIdx].x) * 0.5,
-                midY: (pts[anchorIdx].y + pts[extremeIdx].y) * 0.5,
-                swing
-              });
+              legs.push({ startIdx: anchorIdx, endIdx: extremeIdx, swing });
               anchorU = extremeU;
               anchorIdx = extremeIdx;
               extremeU = u;
@@ -2214,43 +2255,25 @@
           }
         }
 
-        // Include final leg if substantial
         const finalSwing = dir === 1 ? (extremeU - anchorU) : (dir === -1 ? (anchorU - extremeU) : 0);
-        if (finalSwing >= minSwing * 0.75) {
+        if (finalSwing >= minSwing * 0.8) {
           totalSwing += finalSwing;
-          legs.push({
-            midX: (pts[anchorIdx].x + pts[extremeIdx].x) * 0.5,
-            midY: (pts[anchorIdx].y + pts[extremeIdx].y) * 0.5,
-            swing: finalSwing
-          });
+          legs.push({ startIdx: anchorIdx, endIdx: extremeIdx, swing: finalSwing });
         }
 
-        // Require >= 3 reversals (i.e. 4 back-and-forth strokes: Right -> Left -> Right -> Left)
-        // AND total swing >= 1.85x spanU
-        if (reversals >= 3 && legs.length >= 4 && totalSwing >= spanU * 1.85) {
-          // Anti-cursive check: verify that consecutive back-and-forth legs overlap in 2D space
-          // rather than marching steadily across the page like cursive handwriting!
-          let overlappingPairs = 0;
-          for (let k = 1; k < legs.length; k++) {
-            const centerDist = Math.hypot(legs[k].midX - legs[k - 1].midX, legs[k].midY - legs[k - 1].midY);
-            const avgSwing = (legs[k].swing + legs[k - 1].swing) * 0.5;
-            if (centerDist <= Math.max(28, avgSwing * 0.85)) {
-              overlappingPairs++;
-            }
-          }
-          if (overlappingPairs >= 2) {
-            isScratchGesture = true;
-            break;
-          }
+        // Require >= 4 reversals (5 back-and-forth passes) and totalSwing >= 2.4x spanU
+        if (reversals >= 4 && legs.length >= 5 && totalSwing >= spanU * 2.4) {
+          matchedLegs = legs;
+          break;
         }
       }
 
-      if (!isScratchGesture) return false;
+      if (!matchedLegs) return false;
 
       const erasedIds = [];
       Object.values(page.strokes || {}).forEach(existing => {
         if (!existing || existing.deleted || existing.id === stroke.id) return;
-        if (isStrokeHitByScratch(existing, pts, minX, maxX, minY, maxY)) {
+        if (isStrokeHitByScratch(existing, pts, matchedLegs, minX, maxX, minY, maxY)) {
           existing.deleted = true;
           existing.updatedAt = Date.now();
           erasedIds.push(existing.id);
