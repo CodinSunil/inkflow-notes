@@ -223,6 +223,11 @@
 
     <!-- Right: Smart Apple Pencil vs Finger Behavior + Zoom + Paper Template -->
     <div class="flex items-center gap-1.5 shrink-0">
+      <button id="btn-scratch-mode" class="px-2 py-1 rounded-lg text-xs font-medium bg-emerald-600/20 text-emerald-400 border border-emerald-500/40 flex items-center gap-1 hover:opacity-90" title="開啟時：在錯字正上方原地水平/斜向密集來回塗抹 4 趟以上可擦除該字（已加入『許/言/午』左右部首與豎畫防誤刪保護）；也可點此關閉！">
+        <span>✨</span>
+        <span id="scratch-mode-label">塗抹擦字: 開</span>
+      </button>
+
       <button id="btn-finger-mode" class="px-2 py-1 rounded-lg text-xs font-medium bg-[var(--primary)] text-[var(--primary-foreground)] flex items-center gap-1 hover:opacity-90" title="預設開啟：Apple Pencil 碰到螢幕直接寫字，手指碰到螢幕自動變成滑動與雙指縮放！">
         <span>🖐️</span>
         <span id="finger-mode-label">手指=滑動 / Pencil=寫字</span>
@@ -481,6 +486,7 @@
       deviceMode: 'ipad',
       sidebarOpen: window.innerWidth >= 768,
       fingerAlwaysPan: true,
+      scratchToEraseEnabled: true,
       currentTool: 'pen',
       previousDrawTool: 'pen',
       currentColor: '#1E293B',
@@ -2068,28 +2074,44 @@
     function isStrokeHitByScratch(existingStroke, scratchPts, scratchLegs, minX, maxX, minY, maxY) {
       const ePts = existingStroke.points;
       if (!ePts || ePts.length === 0) return false;
-      const pad = 12;
 
-      // Quick bounding box rejection
+      // 1. Compute existing stroke bounding box & center
       let eMinX = Infinity, eMaxX = -Infinity, eMinY = Infinity, eMaxY = -Infinity;
+      let eSumX = 0, eSumY = 0;
       for (let i = 0; i < ePts.length; i++) {
         const p = ePts[i];
         if (p.x < eMinX) eMinX = p.x;
         if (p.x > eMaxX) eMaxX = p.x;
         if (p.y < eMinY) eMinY = p.y;
         if (p.y > eMaxY) eMaxY = p.y;
+        eSumX += p.x;
+        eSumY += p.y;
       }
-      if (eMaxX < minX - pad || eMinX > maxX + pad || eMaxY < minY - pad || eMinY > maxY + pad) {
+      const eCenterX = eSumX / ePts.length;
+      const eCenterY = eSumY / ePts.length;
+
+      // CRITICAL PROTECTION FOR SIDE-BY-SIDE RADICALS (e.g. writing "許" where "午" touches the right edge of "言"):
+      // The existing stroke's geometric center MUST be inside the scratch bounding box,
+      // AND the scratch bounding box must enclose at least 75% of the existing stroke's horizontal & vertical span!
+      const margin = 6;
+      if (eCenterX < minX - margin || eCenterX > maxX + margin || eCenterY < minY - margin || eCenterY > maxY + margin) {
         return false;
       }
+      const eSpanX = Math.max(1, eMaxX - eMinX);
+      const eSpanY = Math.max(1, eMaxY - eMinY);
+      const overlapX = Math.max(0, Math.min(maxX + 8, eMaxX) - Math.max(minX - 8, eMinX));
+      const overlapY = Math.max(0, Math.min(maxY + 8, eMaxY) - Math.max(minY - 8, eMinY));
+      if ((overlapX / eSpanX) < 0.78 || (overlapY / eSpanY) < 0.72) {
+        return false; // Only touching the side/edge of a neighboring radical (like 午 touching 言) -> NEVER erase!
+      }
 
-      // 1. Check how much of the existing stroke is actually covered by the scratch (within 12px)
+      // 2. Require at least 80% of the existing stroke's points to be directly covered within 11px of the scratch!
       let coveredTargetPts = 0;
       for (let i = 0; i < ePts.length; i++) {
         const ep = ePts[i];
         let close = false;
-        for (let s = 0; s < scratchPts.length; s += 2) {
-          if (Math.hypot(ep.x - scratchPts[s].x, ep.y - scratchPts[s].y) <= 13) {
+        for (let s = 0; s < scratchPts.length; s++) {
+          if (Math.hypot(ep.x - scratchPts[s].x, ep.y - scratchPts[s].y) <= 11) {
             close = true;
             break;
           }
@@ -2097,18 +2119,19 @@
         if (close) coveredTargetPts++;
       }
       const targetCoverage = coveredTargetPts / ePts.length;
+      if (targetCoverage < 0.80) return false;
 
-      // 2. Check how many distinct back-and-forth legs of the scratch directly cross the existing stroke (within 12px)
+      // 3. Require at least 4 distinct back-and-forth legs of the scratch to cross over the target stroke
       let legsCrossingTarget = 0;
       for (const leg of scratchLegs) {
         let legHit = false;
         for (let idx = leg.startIdx; idx <= leg.endIdx; idx += 2) {
           const sp = scratchPts[idx];
           if (ePts.length === 1) {
-            if (Math.hypot(sp.x - ePts[0].x, sp.y - ePts[0].y) <= 13) { legHit = true; break; }
+            if (Math.hypot(sp.x - ePts[0].x, sp.y - ePts[0].y) <= 11) { legHit = true; break; }
           } else {
             for (let i = 1; i < ePts.length; i++) {
-              if (pointToSegmentDist(sp.x, sp.y, ePts[i - 1].x, ePts[i - 1].y, ePts[i].x, ePts[i].y) <= 12) {
+              if (pointToSegmentDist(sp.x, sp.y, ePts[i - 1].x, ePts[i - 1].y, ePts[i].x, ePts[i].y) <= 11) {
                 legHit = true;
                 break;
               }
@@ -2119,17 +2142,16 @@
         if (legHit) legsCrossingTarget++;
       }
 
-      // Require that at least 3 separate back-and-forth legs directly cross the target stroke
-      // AND at least 50% of the target stroke (or >= 4 legs crossing for long lines) is covered!
-      return legsCrossingTarget >= 3 && (targetCoverage >= 0.50 || legsCrossingTarget >= 4);
+      return legsCrossingTarget >= 4;
     }
 
     // GoodNotes-style Scratch / Scribble-to-Erase detector:
-    // Strictly separates 1D stationary scrubbing from 2D cursive / connected Chinese handwriting!
+    // Strictly separates 1D stationary scrubbing from 2D cursive / connected Chinese handwriting (like 許 = 言 + 午)!
     function detectAndApplyScratchToErase(stroke, page) {
+      if (!state.scratchToEraseEnabled) return false;
       if (!stroke || (stroke.tool !== 'pen' && stroke.tool !== 'ballpoint')) return false;
       const pts = stroke.points;
-      if (!pts || pts.length < 18) return false;
+      if (!pts || pts.length < 28) return false;
 
       let totalPathLen = 0;
       let minX = pts[0].x, maxX = pts[0].x, minY = pts[0].y, maxY = pts[0].y;
@@ -2143,13 +2165,10 @@
       }
 
       const bboxDiag = Math.hypot(maxX - minX, maxY - minY);
-      if (bboxDiag < 14 || bboxDiag > 480) return false;
-      if ((totalPathLen / bboxDiag) < 2.65) return false;
+      if (bboxDiag < 18 || bboxDiag > 460) return false;
+      if ((totalPathLen / bboxDiag) < 3.4) return false;
 
       // Key Anti-Cursive Law 1: First-Half vs Second-Half Centroid Stationarity!
-      // When writing ANY character or word in cursive (top-to-bottom or left-to-right),
-      // the 1st half of the stroke and 2nd half of the stroke are in different places.
-      // When scrubbing a mistake out in place, the 1st half and 2nd half overlap on the same spot!
       const halfIdx = Math.floor(pts.length / 2);
       let c1x = 0, c1y = 0, c2x = 0, c2y = 0;
       for (let i = 0; i < halfIdx; i++) { c1x += pts[i].x; c1y += pts[i].y; }
@@ -2158,11 +2177,11 @@
       for (let i = halfIdx; i < pts.length; i++) { c2x += pts[i].x; c2y += pts[i].y; }
       c2x /= rem; c2y /= rem;
       const halfCentroidDist = Math.hypot(c2x - c1x, c2y - c1y);
-      if (halfCentroidDist > bboxDiag * 0.28) {
-        return false; // Stroke is progressing in a direction (cursive writing), NOT scrubbing in place!
+      if (halfCentroidDist > bboxDiag * 0.22) {
+        return false;
       }
 
-      // Test 4 candidate scratch axes: 0° (horizontal), 35°, 90° (vertical), 145°
+      // Test candidate scratch axes: 0° (horizontal), 35°, 90° (vertical), 145°
       const angles = [0, (35 * Math.PI) / 180, Math.PI / 2, (145 * Math.PI) / 180];
       let matchedLegs = null;
 
@@ -2174,32 +2193,46 @@
         let minV = Infinity, maxV = -Infinity;
         let travelU = 0, travelV = 0;
         const uArr = new Float32Array(pts.length);
+        const vArr = new Float32Array(pts.length);
 
         for (let i = 0; i < pts.length; i++) {
           const u = pts[i].x * cosA + pts[i].y * sinA;
           const v = -pts[i].x * sinA + pts[i].y * cosA;
           uArr[i] = u;
+          vArr[i] = v;
           if (u < minU) minU = u;
           if (u > maxU) maxU = u;
           if (v < minV) minV = v;
           if (v > maxV) maxV = v;
           if (i > 0) {
-            const prevU = pts[i - 1].x * cosA + pts[i - 1].y * sinA;
-            const prevV = -pts[i - 1].x * sinA + pts[i - 1].y * cosA;
-            travelU += Math.abs(u - prevU);
-            travelV += Math.abs(v - prevV);
+            travelU += Math.abs(u - uArr[i - 1]);
+            travelV += Math.abs(v - vArr[i - 1]);
           }
         }
 
         const spanU = maxU - minU;
         const spanV = maxV - minV;
-        if (spanU < 14) continue;
+        if (spanU < 18) continue;
 
-        // Key Anti-Cursive Law 2: The scrub axis U must be the dominant axis of motion!
-        // Rejects horizontal cursive oscillating slightly in Y, or vertical Chinese characters oscillating in X.
-        if (spanU < spanV * 1.05 || travelU < travelV * 2.15) continue;
+        // Key Anti-Cursive Law 2: Pure 1D Scrubbing Ratio!
+        // Travel along scrub axis U must be >= 3.2x perpendicular travel V!
+        if (spanU < spanV * 1.25 || travelU < travelV * 3.2) continue;
 
-        const minSwing = Math.max(12, spanU * 0.42);
+        // Key Anti-Cursive Law 3: Orthogonal Stroke Veto (Protects Chinese characters with vertical strokes like "午", "王", "書", "丰")!
+        // If any sub-segment of 6 points moves significantly along perpendicular axis V (|dv| >= 11px and |dv| > |du|),
+        // it contains a vertical/orthogonal character stroke (like the "丨" in "午") -> NOT a scratch!
+        let hasOrthogonalCharacterStroke = false;
+        for (let i = 6; i < pts.length; i += 2) {
+          const du = Math.abs(uArr[i] - uArr[i - 6]);
+          const dv = Math.abs(vArr[i] - vArr[i - 6]);
+          if (dv >= 11 && dv > du * 1.05) {
+            hasOrthogonalCharacterStroke = true;
+            break;
+          }
+        }
+        if (hasOrthogonalCharacterStroke) continue;
+
+        const minSwing = Math.max(14, spanU * 0.45);
 
         let dir = 0;
         let anchorIdx = 0;
@@ -2261,8 +2294,8 @@
           legs.push({ startIdx: anchorIdx, endIdx: extremeIdx, swing: finalSwing });
         }
 
-        // Require >= 4 reversals (5 back-and-forth passes) and totalSwing >= 2.4x spanU
-        if (reversals >= 4 && legs.length >= 5 && totalSwing >= spanU * 2.4) {
+        // Require >= 6 reversals (7 back-and-forth passes, i.e. 3.5 full round-trips) and totalSwing >= 3.4x spanU
+        if (reversals >= 6 && legs.length >= 7 && totalSwing >= spanU * 3.4) {
           matchedLegs = legs;
           break;
         }
@@ -2726,6 +2759,21 @@
     document.getElementById('btn-zoom-in').addEventListener('click', () => setPaperZoom(state.zoomScale + 0.15));
     document.getElementById('btn-zoom-out').addEventListener('click', () => setPaperZoom(state.zoomScale - 0.15));
     document.getElementById('btn-zoom-fit').addEventListener('click', () => fitPaperToViewport());
+
+    document.getElementById('btn-scratch-mode')?.addEventListener('click', () => {
+      state.scratchToEraseEnabled = !state.scratchToEraseEnabled;
+      const btn = document.getElementById('btn-scratch-mode');
+      const label = document.getElementById('scratch-mode-label');
+      if (state.scratchToEraseEnabled) {
+        label.textContent = '塗抹擦字: 開';
+        btn.className = 'px-2 py-1 rounded-lg text-xs font-medium bg-emerald-600/20 text-emerald-400 border border-emerald-500/40 flex items-center gap-1 hover:opacity-90';
+        showToast('✨', '已開啟「塗抹擦字」', '在錯字正上方原地來回塗滿 4 趟即可擦除（已啟用左右部首與豎畫防誤刪保護）。');
+      } else {
+        label.textContent = '塗抹擦字: 關';
+        btn.className = 'px-2 py-1 rounded-lg text-xs font-medium bg-[var(--secondary)] text-[var(--muted-foreground)] border border-[var(--border)] flex items-center gap-1 hover:opacity-90';
+        showToast('🔒', '已關閉「塗抹擦字」', '現在無論如何連筆或重疊寫字都 100% 不會觸發塗抹刪除！可使用左下角按鈕或單指點兩下切橡皮擦。');
+      }
+    });
 
     document.querySelectorAll('[data-tool]').forEach(btn => {
       btn.addEventListener('click', () => selectTool(btn.dataset.tool, false));
