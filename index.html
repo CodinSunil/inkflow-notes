@@ -509,6 +509,9 @@
       pointerDownPos: { x: 0, y: 0 },
       pointerDownTime: 0,
       isDrawing: false,
+      activeDrawingPointerId: null,
+      activeDrawingPointerType: null,
+      lastPenActivityTime: 0,
       currentStroke: null,
       lassoPoints: [],
       selectedStrokeIds: new Set(),
@@ -1981,6 +1984,8 @@
 
     function cancelActiveDrawing() {
       state.isDrawing = false;
+      state.activeDrawingPointerId = null;
+      state.activeDrawingPointerType = null;
       state.currentStroke = null;
       state.lassoPoints = [];
       state.isDraggingLasso = false;
@@ -2001,6 +2006,11 @@
     function startDrawingOrToolAction(e, pt) {
       const note = getActiveNote();
       const page = note.pages[state.currentPageIndex];
+      state.activeDrawingPointerId = e.pointerId ?? 'stylus';
+      state.activeDrawingPointerType = e.pointerType || 'pen';
+      if (state.activeDrawingPointerType === 'pen') {
+        state.lastPenActivityTime = Date.now();
+      }
 
       if (state.currentTool === 'text') {
         const content = prompt('輸入要插入筆記的文字內容：', '');
@@ -2048,6 +2058,8 @@
         deleted: false,
         points: [pt]
       };
+      overlayCtx.clearRect(0, 0, PAPER_BASE_WIDTH, PAPER_BASE_HEIGHT);
+      drawSingleStroke(overlayCtx, state.currentStroke);
     }
 
     function getStrokeBoundingSpan(stroke) {
@@ -2321,9 +2333,113 @@
       return true;
     }
 
+    // Block iPadOS Safari Scribble / native gesture recognizer from swallowing rapid short strokes (like the bottom stroke of "日")!
+    // Also provides a direct TouchEvent ('stylus') bridge whenever WebKit drops pointerdown/pointermove or fires premature pointercancel!
+    inkCanvas.addEventListener('touchstart', (e) => {
+      e.preventDefault();
+      if (!e.changedTouches) return;
+      for (let i = 0; i < e.changedTouches.length; i++) {
+        const t = e.changedTouches[i];
+        if (t.touchType === 'stylus') {
+          state.stylusTouchActive = true;
+          state.lastPenActivityTime = Date.now();
+          if (!state.isDrawing) {
+            const synthEvent = {
+              clientX: t.clientX,
+              clientY: t.clientY,
+              pointerType: 'pen',
+              pressure: t.force || 0.7,
+              pointerId: 'stylus_touch',
+              type: 'touchstart'
+            };
+            const pt = getCanvasCoords(synthEvent);
+            state.pointerDownPos = pt;
+            state.pointerDownTime = Date.now();
+            startDrawingOrToolAction(synthEvent, pt);
+          }
+          break;
+        }
+      }
+    }, { passive: false });
+
+    inkCanvas.addEventListener('touchmove', (e) => {
+      e.preventDefault();
+      if (!e.changedTouches) return;
+      for (let i = 0; i < e.changedTouches.length; i++) {
+        const t = e.changedTouches[i];
+        if (t.touchType === 'stylus') {
+          state.stylusTouchActive = true;
+          state.lastPenActivityTime = Date.now();
+          handlePointerMove({
+            clientX: t.clientX,
+            clientY: t.clientY,
+            pointerType: 'pen',
+            pressure: t.force || 0.7,
+            buttons: 1,
+            pointerId: 'stylus_touch',
+            type: 'touchmove'
+          });
+          break;
+        }
+      }
+    }, { passive: false });
+
+    const handleStylusTouchEnd = (e) => {
+      if (!e.changedTouches) return;
+      for (let i = 0; i < e.changedTouches.length; i++) {
+        const t = e.changedTouches[i];
+        if (t.touchType === 'stylus') {
+          state.stylusTouchActive = false;
+          state.lastPenActivityTime = Date.now();
+          if (state.isDrawing && state.activeDrawingPointerType === 'pen') {
+            handlePointerEnd({
+              clientX: t.clientX,
+              clientY: t.clientY,
+              pointerType: 'pen',
+              pressure: t.force || 0.7,
+              pointerId: 'stylus_touch',
+              type: 'touchend'
+            });
+          }
+          break;
+        }
+      }
+    };
+    inkCanvas.addEventListener('touchend', handleStylusTouchEnd, { passive: false });
+    inkCanvas.addEventListener('touchcancel', handleStylusTouchEnd, { passive: false });
+
     inkCanvas.addEventListener('pointerdown', (e) => {
       e.preventDefault();
-      inkCanvas.setPointerCapture(e.pointerId);
+
+      const now = Date.now();
+
+      // PALM REJECTION GUARD:
+      // If Apple Pencil is currently drawing OR was drawing within the last 420ms (e.g. moving between strokes of "日"),
+      // ignore any single-finger/palm "touch" event so the palm NEVER cancels or aborts the Pencil stroke!
+      if (e.pointerType === 'touch') {
+        if ((state.isDrawing && state.activeDrawingPointerType === 'pen') || (now - state.lastPenActivityTime < 420)) {
+          return;
+        }
+      }
+
+      // NOTE: Do NOT call inkCanvas.setPointerCapture(e.pointerId) for Apple Pencil ('pen')!
+      // In iPadOS WebKit, setPointerCapture on rapid micro-strokes (like the 3rd & 4th stroke of "日")
+      // causes a race condition on pointerup that swallows the next stroke's pointerdown!
+      if (e.pointerType !== 'pen') {
+        try { inkCanvas.setPointerCapture(e.pointerId); } catch (_) {}
+      } else {
+        state.lastPenActivityTime = now;
+        // If a previous pen stroke got stuck without pointerup, commit it cleanly first before starting the new stroke
+        if (state.isDrawing && state.currentStroke && state.currentStroke.points.length > 0) {
+          const note = getActiveNote();
+          const page = note.pages[state.currentPageIndex];
+          page.strokes[state.currentStroke.id] = state.currentStroke;
+          state.undoStack.push({ type: 'add_stroke', id: state.currentStroke.id });
+          state.currentStroke = null;
+          state.isDrawing = false;
+          renderActivePage();
+        }
+      }
 
       const hwBadge = document.getElementById('hardware-detect-badge');
       if (e.pointerType === 'pen') {
@@ -2340,7 +2456,6 @@
       }
 
       const pt = getCanvasCoords(e);
-      const now = Date.now();
       state.pointerDownPos = pt;
       state.pointerDownTime = now;
 
@@ -2353,7 +2468,9 @@
         }
 
         if (state.activePointers.size >= 2) {
-          cancelActiveDrawing();
+          if (state.activeDrawingPointerType !== 'pen') {
+            cancelActiveDrawing();
+          }
           state.isPinchingOrPanning = true;
           state.lastTouchTapTime = 0;
           const metrics = getTwoFingerMetrics();
@@ -2366,7 +2483,6 @@
         }
 
         if (state.fingerAlwaysPan) {
-          cancelActiveDrawing();
           state.isPinchingOrPanning = true;
           state.panLastCenter = { x: e.clientX, y: e.clientY };
           return;
@@ -2376,30 +2492,49 @@
       startDrawingOrToolAction(e, pt);
     });
 
-    inkCanvas.addEventListener('pointermove', (e) => {
-      if (e.pointerType === 'touch' && state.activePointers.has(e.pointerId)) {
-        state.activePointers.set(e.pointerId, { clientX: e.clientX, clientY: e.clientY });
-
-        if (state.activePointers.size >= 2) {
-          cancelActiveDrawing();
-          const metrics = getTwoFingerMetrics();
-          if (metrics && state.pinchStartDist > 10) {
-            const ratio = metrics.dist / state.pinchStartDist;
-            setPaperZoom(state.pinchStartScale * ratio);
-            if (state.panLastCenter) {
-              viewportEl.scrollLeft += (state.panLastCenter.x - metrics.centerX);
-              viewportEl.scrollTop += (state.panLastCenter.y - metrics.centerY);
-            }
-            state.panLastCenter = { x: metrics.centerX, y: metrics.centerY };
-          }
+    function handlePointerMove(e) {
+      if (e.pointerType === 'pen') {
+        state.lastPenActivityTime = Date.now();
+        // WebKit Swallow Recovery: if iPadOS Safari swallowed pointerdown on a rapid short stroke (like the bottom stroke of "日"),
+        // automatically start the stroke on the first pointermove that has pressure > 0 or buttons > 0!
+        if (!state.isDrawing && !state.isDraggingLasso && (e.pressure > 0.01 || e.buttons > 0)) {
+          const pt = getCanvasCoords(e);
+          state.pointerDownPos = pt;
+          state.pointerDownTime = Date.now();
+          startDrawingOrToolAction(e, pt);
           return;
         }
+      }
 
-        if (state.isPinchingOrPanning && state.activePointers.size === 1 && state.panLastCenter) {
-          viewportEl.scrollLeft += (state.panLastCenter.x - e.clientX);
-          viewportEl.scrollTop += (state.panLastCenter.y - e.clientY);
-          state.panLastCenter = { x: e.clientX, y: e.clientY };
+      if (e.pointerType === 'touch') {
+        // Ignore palm touch moves while Apple Pencil is active or within 420ms of Pencil activity
+        if ((state.isDrawing && state.activeDrawingPointerType === 'pen') || (Date.now() - state.lastPenActivityTime < 420)) {
           return;
+        }
+        if (state.activePointers.has(e.pointerId)) {
+          state.activePointers.set(e.pointerId, { clientX: e.clientX, clientY: e.clientY });
+
+          if (state.activePointers.size >= 2) {
+            if (state.activeDrawingPointerType !== 'pen') cancelActiveDrawing();
+            const metrics = getTwoFingerMetrics();
+            if (metrics && state.pinchStartDist > 10) {
+              const ratio = metrics.dist / state.pinchStartDist;
+              setPaperZoom(state.pinchStartScale * ratio);
+              if (state.panLastCenter) {
+                viewportEl.scrollLeft += (state.panLastCenter.x - metrics.centerX);
+                viewportEl.scrollTop += (state.panLastCenter.y - metrics.centerY);
+              }
+              state.panLastCenter = { x: metrics.centerX, y: metrics.centerY };
+            }
+            return;
+          }
+
+          if (state.isPinchingOrPanning && state.activePointers.size === 1 && state.panLastCenter) {
+            viewportEl.scrollLeft += (state.panLastCenter.x - e.clientX);
+            viewportEl.scrollTop += (state.panLastCenter.y - e.clientY);
+            state.panLastCenter = { x: e.clientX, y: e.clientY };
+            return;
+          }
         }
       }
 
@@ -2423,6 +2558,7 @@
       }
 
       if (!state.isDrawing) return;
+      if (state.activeDrawingPointerType === 'pen' && e.pointerType !== 'pen') return;
 
       if (state.currentTool === 'eraser') {
         eraseStrokesNearPoint(pt.x, pt.y);
@@ -2457,9 +2593,9 @@
           }
           const prev = pts[pts.length - 1];
           const dist = Math.hypot(rawPt.x - prev.x, rawPt.y - prev.y);
-          if (dist >= 0.42) {
+          if (dist >= 0.35) {
             // Notability Streamline stabilization filter (adaptive to pen speed)
-            const alpha = Math.min(0.84, Math.max(0.46, dist / 12));
+            const alpha = Math.min(0.86, Math.max(0.48, dist / 12));
             pts.push({
               x: prev.x + (rawPt.x - prev.x) * alpha,
               y: prev.y + (rawPt.y - prev.y) * alpha,
@@ -2470,6 +2606,13 @@
         overlayCtx.clearRect(0, 0, PAPER_BASE_WIDTH, PAPER_BASE_HEIGHT);
         drawSingleStroke(overlayCtx, state.currentStroke);
       }
+    }
+
+    inkCanvas.addEventListener('pointermove', handlePointerMove);
+    window.addEventListener('pointermove', (e) => {
+      if (state.isDrawing && e.target !== inkCanvas) {
+        handlePointerMove(e);
+      }
     });
 
     function handlePointerEnd(e) {
@@ -2477,7 +2620,10 @@
         const wasSingleTouch = state.activePointers.size === 1;
         state.activePointers.delete(e.pointerId);
 
-        if (wasSingleTouch && state.fingerAlwaysPan) {
+        // Ignore palm touch-up during or right after Apple Pencil writing
+        const isPalmNearPen = (state.isDrawing && state.activeDrawingPointerType === 'pen') || (Date.now() - state.lastPenActivityTime < 420);
+
+        if (!isPalmNearPen && wasSingleTouch && state.fingerAlwaysPan) {
           const now = Date.now();
           const touchDuration = now - state.touchDownTime;
           const touchMoveDist = Math.hypot(e.clientX - state.touchDownPos.x, e.clientY - state.touchDownPos.y);
@@ -2500,6 +2646,19 @@
         } else if (state.activePointers.size === 1 && state.isPinchingOrPanning) {
           const remaining = Array.from(state.activePointers.values())[0];
           state.panLastCenter = { x: remaining.clientX, y: remaining.clientY };
+        }
+
+        // CRITICAL FIX: If fingerAlwaysPan is active OR Apple Pencil is currently drawing,
+        // a touch/palm pointerup/pointercancel must NEVER fall through and terminate the active Pencil stroke!
+        if (state.fingerAlwaysPan || state.activeDrawingPointerType === 'pen') {
+          return;
+        }
+      }
+
+      if (e.pointerType === 'pen') {
+        state.lastPenActivityTime = Date.now();
+        // Shield against iPadOS Scribble premature pointercancel while the Apple Pencil is still physically on the glass!
+        if (e.type === 'pointercancel' && state.stylusTouchActive) {
           return;
         }
       }
@@ -2524,7 +2683,22 @@
       }
 
       if (!state.isDrawing) return;
+
+      // Append final pen-up coordinate so ultra-fast short strokes (like the bottom stroke of "日") never lose their tail!
+      if (state.currentStroke && (e.pointerType === 'pen' || e.pointerType === 'mouse')) {
+        const endPt = getCanvasCoords(e);
+        const pts = state.currentStroke.points;
+        if (pts.length > 0) {
+          const last = pts[pts.length - 1];
+          if (Math.hypot(endPt.x - last.x, endPt.y - last.y) >= 0.25) {
+            pts.push(endPt);
+          }
+        }
+      }
+
       state.isDrawing = false;
+      state.activeDrawingPointerId = null;
+      state.activeDrawingPointerType = null;
       overlayCtx.clearRect(0, 0, PAPER_BASE_WIDTH, PAPER_BASE_HEIGHT);
 
       const note = getActiveNote();
