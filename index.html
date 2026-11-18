@@ -94,9 +94,9 @@
 
   <!-- TOP NAVIGATION BAR -->
   <header class="h-11 sm:h-12 bg-[var(--card)] border-b border-[var(--border)] px-2 sm:px-3 flex items-center justify-between gap-1.5 shrink-0 z-30">
-    <!-- Left: Collapsible Sidebar Toggle + Device Mode + Editable Title -->
+    <!-- Left: Collapsible Sidebar Toggle + Device Mode + Subject Tag + Editable Title -->
     <div class="flex items-center gap-1.5 min-w-0 flex-1">
-      <button id="btn-toggle-sidebar" class="px-2 py-1.5 rounded-lg bg-[var(--secondary)] hover:opacity-90 text-[var(--foreground)] flex items-center gap-1 text-xs font-semibold border border-[var(--border)] shrink-0" title="展開/收合筆記目錄">
+      <button id="btn-toggle-sidebar" class="px-2 py-1.5 rounded-lg bg-[var(--secondary)] hover:opacity-90 text-[var(--foreground)] flex items-center gap-1 text-xs font-semibold border border-[var(--border)] shrink-0" title="展開/收合筆記與分類目錄">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25H12"/></svg>
         <span>目錄</span>
       </button>
@@ -111,25 +111,29 @@
         </button>
       </div>
 
+      <!-- Current Note Subject (Category) Quick Selector -->
+      <select id="current-note-subject" class="bg-[var(--secondary)] text-[var(--foreground)] text-[11px] rounded-lg px-2 py-1 border border-[var(--border)] focus:outline-none max-w-[115px] sm:max-w-[140px] truncate shrink-0" title="將此筆記歸檔至分類項目 (Subject)">
+      </select>
+
       <!-- Current Note Title Editable -->
       <input id="note-title-input" type="text" value="微積分與系統架構筆記"
         class="bg-transparent font-semibold text-xs sm:text-sm text-[var(--foreground)] focus:outline-none focus:ring-1 focus:ring-[var(--primary)] rounded px-1.5 py-0.5 min-w-0 flex-1 max-w-[130px] sm:max-w-xs truncate"
         aria-label="筆記標題" />
     </div>
 
-    <!-- Right: Import Notability Folder/Files + Merge + Cloud -->
+    <!-- Right: Import Notability / PDF / Plist + Merge + Cloud -->
     <div class="flex items-center gap-1 shrink-0">
-      <!-- Direct Notability Folder / .note File Importer -->
-      <label class="px-2.5 py-1 rounded-lg text-[11px] sm:text-xs font-semibold bg-amber-500 text-slate-950 hover:opacity-90 flex items-center gap-1 cursor-pointer shadow-xs" title="直接選取 I:\我的雲端硬碟\Notability 裡的所有 .note 檔，自動解壓縮 Session.plist 轉成可修改筆跡！">
+      <!-- Universal Importer: NO accept filter so iPad Files.app allows .note, .pdf, Session.plist, .zip, .json! -->
+      <label class="px-2.5 py-1 rounded-lg text-[11px] sm:text-xs font-semibold bg-amber-500 text-slate-950 hover:opacity-90 flex items-center gap-1 cursor-pointer shadow-xs" title="支援選取 .note、.pdf、或點進 .note 資料夾內全選 Session.plist 與 PDF 直接匯入！">
         <span>📥</span>
-        <span>匯入 Notability (.note)</span>
-        <input id="input-notability-files" type="file" accept=".note,.json" multiple class="hidden" />
+        <span>匯入 (.note / PDF)</span>
+        <input id="input-notability-files" type="file" multiple class="hidden" />
       </label>
 
-      <!-- Whole Folder Picker for I:\我的雲端硬碟\Notability -->
-      <label class="hidden md:flex px-2 py-1 rounded-lg text-xs font-medium bg-amber-500/15 text-amber-400 border border-amber-500/30 hover:bg-amber-500/25 items-center gap-1 cursor-pointer" title="直接選取整個 I:\我的雲端硬碟\Notability 資料夾">
+      <!-- Whole Folder Picker for Desktop -->
+      <label class="hidden md:flex px-2 py-1 rounded-lg text-xs font-medium bg-amber-500/15 text-amber-400 border border-amber-500/30 hover:bg-amber-500/25 items-center gap-1 cursor-pointer" title="電腦版可直接選取整個 Notability 資料夾">
         <span>📂</span>
-        <span>選取整個資料夾</span>
+        <span>選資料夾</span>
         <input id="input-notability-folder" type="file" webkitdirectory directory multiple class="hidden" />
       </label>
 
@@ -138,20 +142,20 @@
         <span class="hidden lg:inline">合集(A∪B)</span>
       </button>
 
-      <button id="btn-download-pwa-html" type="button" class="px-2.5 py-1 rounded-lg text-[11px] sm:text-xs font-semibold bg-emerald-500 text-slate-950 hover:opacity-90 flex items-center gap-1 shadow-xs" title="下載單一檔案 index.html 直接拖進 GitHub 即可部署！">
+      <button id="btn-download-pwa-html" type="button" class="px-2.5 py-1 rounded-lg text-[11px] sm:text-xs font-semibold bg-emerald-500 text-slate-950 hover:opacity-90 flex items-center gap-1 shadow-xs" title="下載單一檔案 index.html">
         <span>📥</span>
-        <span class="hidden md:inline">下載 index.html</span>
+        <span class="hidden md:inline">下載 HTML</span>
       </button>
 
       <button id="btn-open-cloud-modal" class="px-2.5 py-1 rounded-lg text-[11px] sm:text-xs font-medium bg-[var(--primary)] text-[var(--primary-foreground)] hover:opacity-90 flex items-center gap-1 shadow-xs">
         <span id="gdrive-top-dot" class="w-2 h-2 rounded-full bg-amber-300"></span>
-        <span id="gdrive-top-label" class="hidden sm:inline">Google 雲端</span>
+        <span id="gdrive-top-label" class="hidden sm:inline">雲端同步</span>
       </button>
     </div>
   </header>
 
   <!-- SECOND ROW: GOODNOTES / NOTABILITY TOOLBAR -->
-  <div class="bg-[var(--card)]/95 backdrop-blur border-b border-[var(--border)] px-2 py-1.5 flex items-center justify-between gap-2 overflow-x-auto shrink-0 z-20">
+  <div class="bg-[var(--card)]/95 backdrop-blur border-b border-[var(--border)] px-2 py-1.5 flex items-center justify-between gap-2 overflow-x-auto shrink-0 z-30 relative">
     <!-- Left: Undo / Redo -->
     <div class="flex items-center gap-1 shrink-0">
       <button id="btn-undo" class="p-1.5 rounded-lg hover:bg-[var(--secondary)] text-[var(--muted-foreground)] hover:text-[var(--foreground)]" title="復原 (Undo)">
@@ -162,14 +166,14 @@
       </button>
     </div>
 
-    <!-- Center: Core Tools -->
+    <!-- Center: Core Tools + Colors + Expanded Widths + Dash Styles -->
     <div class="flex items-center gap-1 bg-[var(--secondary)] px-1.5 py-1 rounded-xl border border-[var(--border)] shrink-0">
-      <button data-tool="pen" class="tool-btn active px-2 py-1 rounded-lg text-xs font-medium bg-[var(--primary)] text-[var(--primary-foreground)] flex items-center gap-1" title="Notability 絲滑感壓鋼筆（隨力道與速度呈現自然筆鋒）">
+      <button data-tool="pen" class="tool-btn active px-2 py-1 rounded-lg text-xs font-medium bg-[var(--primary)] text-[var(--primary-foreground)] flex items-center gap-1" title="Notability 絲滑感壓鋼筆">
         <span>✒️</span>
         <span>鋼筆</span>
       </button>
 
-      <button data-tool="ballpoint" class="tool-btn px-2 py-1 rounded-lg text-xs font-medium text-[var(--foreground)] hover:bg-[var(--card)] flex items-center gap-1" title="Notability 經典等寬原子筆（零感壓變化、極致絲滑流線）">
+      <button data-tool="ballpoint" class="tool-btn px-2 py-1 rounded-lg text-xs font-medium text-[var(--foreground)] hover:bg-[var(--card)] flex items-center gap-1" title="Notability 等寬極致絲滑原子筆">
         <span>🖋️</span>
         <span>原子筆</span>
       </button>
@@ -179,9 +183,10 @@
         <span>螢光筆</span>
       </button>
 
-      <button data-tool="eraser" class="tool-btn px-2 py-1 rounded-lg text-xs font-medium text-[var(--foreground)] hover:bg-[var(--card)] flex items-center gap-1" title="Apple Pencil 點兩下可隨時在畫筆與橡皮擦之間切換！">
+      <button id="btn-eraser-tool" data-tool="eraser" class="tool-btn px-2 py-1 rounded-lg text-xs font-medium text-[var(--foreground)] hover:bg-[var(--card)] flex items-center gap-1" title="點擊切換橡皮擦；再點一下展開「單指點兩下 / 來回塗抹消除 / 橡皮擦大小」設定選單！">
         <span>🧹</span>
         <span>橡皮擦</span>
+        <span class="text-[10px] opacity-75">▾</span>
       </button>
 
       <button data-tool="lasso" class="tool-btn px-2 py-1 rounded-lg text-xs font-medium text-[var(--foreground)] hover:bg-[var(--card)] flex items-center gap-1">
@@ -202,35 +207,59 @@
         <button data-color="#1D4ED8" class="color-dot w-4 h-4 rounded-full bg-[#1D4ED8]" title="鋼筆藍"></button>
         <button data-color="#DC2626" class="color-dot w-4 h-4 rounded-full bg-[#DC2626]" title="批改紅"></button>
         <button data-color="#059669" class="color-dot w-4 h-4 rounded-full bg-[#059669]" title="森林綠"></button>
+        <button data-color="#7C3AED" class="color-dot w-4 h-4 rounded-full bg-[#7C3AED]" title="典雅紫"></button>
+        <button data-color="#EA580C" class="color-dot w-4 h-4 rounded-full bg-[#EA580C]" title="活力橘"></button>
         <button data-color="#FACC15" class="color-dot w-4 h-4 rounded-full bg-[#FACC15] border border-amber-400" title="螢光黃"></button>
       </div>
 
       <div class="h-4 w-[1px] bg-[var(--border)] mx-0.5"></div>
 
-      <!-- Stroke Width Presets -->
+      <!-- 6 Stroke Width Presets + Fine Slider -->
       <div class="flex items-center gap-0.5">
-        <button data-size="2.2" class="size-btn px-1.5 py-1 rounded hover:bg-[var(--card)] flex items-center justify-center" title="細字">
+        <button data-size="1.3" class="size-btn px-1.5 py-1 rounded hover:bg-[var(--card)] flex items-center justify-center" title="極細 (1.3px)">
+          <span class="w-1 h-1 rounded-full bg-[var(--foreground)]"></span>
+        </button>
+        <button data-size="2.2" class="size-btn px-1.5 py-1 rounded hover:bg-[var(--card)] flex items-center justify-center" title="細字 (2.2px)">
           <span class="w-1.5 h-1.5 rounded-full bg-[var(--foreground)]"></span>
         </button>
-        <button data-size="4.0" class="size-btn px-1.5 py-1 rounded bg-[var(--card)] shadow-xs flex items-center justify-center" title="適中">
+        <button data-size="3.6" class="size-btn px-1.5 py-1 rounded bg-[var(--card)] shadow-xs flex items-center justify-center" title="標準 (3.6px)">
+          <span class="w-2 h-2 rounded-full bg-[var(--foreground)]"></span>
+        </button>
+        <button data-size="5.2" class="size-btn px-1.5 py-1 rounded hover:bg-[var(--card)] flex items-center justify-center" title="中粗 (5.2px)">
           <span class="w-2.5 h-2.5 rounded-full bg-[var(--foreground)]"></span>
         </button>
-        <button data-size="7.5" class="size-btn px-1.5 py-1 rounded hover:bg-[var(--card)] flex items-center justify-center" title="粗筆">
+        <button data-size="8.0" class="size-btn px-1.5 py-1 rounded hover:bg-[var(--card)] flex items-center justify-center" title="粗筆 (8.0px)">
           <span class="w-3.5 h-3.5 rounded-full bg-[var(--foreground)]"></span>
         </button>
+        <button data-size="12.0" class="size-btn px-1.5 py-1 rounded hover:bg-[var(--card)] flex items-center justify-center" title="特粗 (12.0px)">
+          <span class="w-4 h-4 rounded-full bg-[var(--foreground)]"></span>
+        </button>
+        <div class="hidden sm:flex items-center gap-1 pl-1 pr-0.5" title="無段微調筆跡粗細">
+          <input id="stroke-size-slider" type="range" min="1" max="20" step="0.5" value="3.6" class="w-14 accent-blue-500 cursor-pointer h-1" />
+          <span id="stroke-size-label" class="font-mono text-[10px] text-[var(--muted-foreground)] w-7 text-right">3.6</span>
+        </div>
+      </div>
+
+      <div class="h-4 w-[1px] bg-[var(--border)] mx-0.5"></div>
+
+      <!-- Line Dash Style Selector (Solid / Dashed / Dotted) -->
+      <div class="flex items-center gap-0.5" title="切換實線 / 虛線 / 點線">
+        <button data-dash="solid" class="dash-btn px-1.5 py-1 rounded bg-[var(--card)] shadow-xs text-[11px] font-mono text-[var(--foreground)]" title="實線 (Solid)">──</button>
+        <button data-dash="dashed" class="dash-btn px-1.5 py-1 rounded hover:bg-[var(--card)] text-[11px] font-mono text-[var(--muted-foreground)]" title="虛線 (Dashed)">- -</button>
+        <button data-dash="dotted" class="dash-btn px-1.5 py-1 rounded hover:bg-[var(--card)] text-[11px] font-mono text-[var(--muted-foreground)]" title="點線 (Dotted)">···</button>
       </div>
     </div>
 
-    <!-- Right: Smart Apple Pencil vs Finger Behavior + Zoom + Paper Template -->
+    <!-- Right: Scroll Mode (Vertical Continuous vs Page Flip) + Finger Behavior + Zoom + Template -->
     <div class="flex items-center gap-1.5 shrink-0">
-      <button id="btn-scratch-mode" class="px-2 py-1 rounded-lg text-xs font-medium bg-emerald-600/20 text-emerald-400 border border-emerald-500/40 flex items-center gap-1 hover:opacity-90" title="開啟時：在錯字正上方原地水平/斜向密集來回塗抹 4 趟以上可擦除該字（已加入『許/言/午』左右部首與豎畫防誤刪保護）；也可點此關閉！">
-        <span>✨</span>
-        <span id="scratch-mode-label">塗抹擦字: 開</span>
+      <button id="btn-scroll-mode" class="px-2 py-1 rounded-lg text-xs font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 flex items-center gap-1 hover:opacity-90" title="切換「直式連續往下寫 (像 Notability)」或「單頁翻頁」模式">
+        <span>📜</span>
+        <span id="scroll-mode-label">直式連續</span>
       </button>
 
       <button id="btn-finger-mode" class="px-2 py-1 rounded-lg text-xs font-medium bg-[var(--primary)] text-[var(--primary-foreground)] flex items-center gap-1 hover:opacity-90" title="預設開啟：Apple Pencil 碰到螢幕直接寫字，手指碰到螢幕自動變成滑動與雙指縮放！">
         <span>🖐️</span>
-        <span id="finger-mode-label">手指=滑動 / Pencil=寫字</span>
+        <span id="finger-mode-label">手指=滑動</span>
       </button>
 
       <div class="flex items-center bg-[var(--secondary)] rounded-lg border border-[var(--border)] p-0.5 text-xs">
@@ -253,18 +282,73 @@
     </div>
   </div>
 
+  <!-- ERASER OPTIONS POPOVER MENU (Appears when tapping Eraser button, houses Finger Double-Tap & Scratch-to-Erase toggles!) -->
+  <div id="eraser-popover" class="hidden fixed top-24 left-1/2 -translate-x-1/2 z-50 w-80 bg-[var(--card)] border border-[var(--border)] rounded-2xl shadow-2xl p-3.5 space-y-3 text-xs">
+    <div class="flex items-center justify-between border-b border-[var(--border)] pb-2">
+      <div class="font-bold text-[var(--foreground)] flex items-center gap-1.5">
+        <span>🧹</span>
+        <span>橡皮擦與快切手勢設定</span>
+      </div>
+      <button id="btn-close-eraser-popover" type="button" class="px-1.5 py-0.5 rounded hover:bg-[var(--secondary)] text-[var(--muted-foreground)]">✕</button>
+    </div>
+
+    <!-- Eraser Size -->
+    <div class="space-y-1">
+      <div class="text-[11px] text-[var(--muted-foreground)] font-medium">擦除半徑大小</div>
+      <div class="grid grid-cols-4 gap-1.5">
+        <button type="button" data-eraser-radius="10" class="eraser-rad-btn py-1 rounded-lg border border-[var(--border)] bg-[var(--secondary)]/60 text-[11px] font-medium">細 (10)</button>
+        <button type="button" data-eraser-radius="18" class="eraser-rad-btn py-1 rounded-lg border border-[var(--primary)] bg-[var(--primary)]/20 text-[var(--foreground)] text-[11px] font-bold">標準 (18)</button>
+        <button type="button" data-eraser-radius="30" class="eraser-rad-btn py-1 rounded-lg border border-[var(--border)] bg-[var(--secondary)]/60 text-[11px] font-medium">粗 (30)</button>
+        <button type="button" data-eraser-radius="46" class="eraser-rad-btn py-1 rounded-lg border border-[var(--border)] bg-[var(--secondary)]/60 text-[11px] font-medium">特大 (46)</button>
+      </div>
+    </div>
+
+    <!-- Gesture Toggles inside Eraser Menu -->
+    <div class="space-y-2 pt-1 border-t border-[var(--border)]">
+      <label class="flex items-center justify-between gap-2 cursor-pointer py-1">
+        <div>
+          <div class="font-semibold text-[var(--foreground)]">🖐️ 單指點兩下切換橡皮擦</div>
+          <div class="text-[10px] text-[var(--muted-foreground)]">用一根手指在紙上點兩下切換「畫筆 ↔ 橡皮擦」</div>
+        </div>
+        <input id="chk-finger-doubletap-eraser" type="checkbox" checked class="w-4 h-4 accent-blue-500 rounded cursor-pointer" />
+      </label>
+
+      <label class="flex items-center justify-between gap-2 cursor-pointer py-1">
+        <div>
+          <div class="font-semibold text-[var(--foreground)]">✨ 來回塗抹自動消除</div>
+          <div class="text-[10px] text-[var(--muted-foreground)]">在錯字正上方原地來回塗滿 4 趟自動擦除</div>
+        </div>
+        <input id="chk-scratch-to-erase" type="checkbox" checked class="w-4 h-4 accent-blue-500 rounded cursor-pointer" />
+      </label>
+
+      <label class="flex items-center justify-between gap-2 cursor-pointer py-1">
+        <div>
+          <div class="font-semibold text-[var(--foreground)]">⚡ 顯示左下角懸浮快切鈕</div>
+          <div class="text-[10px] text-[var(--muted-foreground)]">按住不放即擦、放開自動回畫筆</div>
+        </div>
+        <input id="chk-show-floating-fab" type="checkbox" checked class="w-4 h-4 accent-blue-500 rounded cursor-pointer" />
+      </label>
+    </div>
+
+    <div class="pt-1 border-t border-[var(--border)]">
+      <button id="btn-clear-page-strokes" type="button" class="w-full py-1.5 rounded-lg bg-red-500/15 text-red-400 border border-red-500/30 hover:bg-red-500/25 font-semibold text-xs">
+        🗑️ 清除當前頁面所有筆跡
+      </button>
+    </div>
+  </div>
+
   <!-- MAIN WORKSPACE -->
   <div class="flex-1 flex overflow-hidden relative">
 
     <!-- MOBILE BACKDROP OVERLAY -->
     <div id="sidebar-backdrop" class="hidden fixed inset-0 bg-black/50 backdrop-blur-[1px] z-30 md:hidden"></div>
 
-    <!-- COLLAPSIBLE NOTEBOOK CATALOG SIDEBAR -->
+    <!-- COLLAPSIBLE NOTEBOOK & SUBJECTS CATALOG SIDEBAR (Notability Style!) -->
     <aside id="notebook-sidebar" class="fixed md:static inset-y-0 left-0 w-72 bg-[var(--card)] border-r border-[var(--border)] flex flex-col shrink-0 z-40 shadow-2xl md:shadow-none">
       <div class="p-3 border-b border-[var(--border)] flex items-center justify-between">
         <div>
-          <h2 class="text-xs font-bold uppercase tracking-wider text-[var(--muted-foreground)]">所有筆記目錄 (Catalog)</h2>
-          <p id="device-storage-summary" class="text-[11px] text-[var(--muted-foreground)] mt-0.5">支援直接拖入 .note 檔案</p>
+          <h2 class="text-xs font-bold uppercase tracking-wider text-[var(--muted-foreground)]">Notability 分類與筆記</h2>
+          <p id="device-storage-summary" class="text-[11px] text-[var(--muted-foreground)] mt-0.5">支援分類歸檔 & 直式連續書寫</p>
         </div>
         <div class="flex items-center gap-1">
           <button id="btn-new-note" class="px-2.5 py-1 rounded-lg text-xs font-semibold bg-[var(--primary)] text-[var(--primary-foreground)] hover:opacity-90">
@@ -276,18 +360,31 @@
         </div>
       </div>
 
-      <!-- Direct Notability Import Box inside Sidebar -->
+      <!-- Notability Subjects (Dividers / Categories) Section -->
+      <div class="p-2.5 border-b border-[var(--border)] bg-[var(--secondary)]/30 space-y-1.5">
+        <div class="flex items-center justify-between">
+          <span class="text-[11px] font-bold text-[var(--muted-foreground)] uppercase tracking-wider">📁 分類項目 (Subjects)</span>
+          <button id="btn-new-subject" type="button" class="px-2 py-0.5 rounded bg-[var(--secondary)] hover:bg-[var(--border)] text-[11px] font-semibold text-[var(--link)] border border-[var(--border)]">
+            + 新增項目
+          </button>
+        </div>
+        <div id="subjects-list" class="flex flex-wrap gap-1 max-h-28 overflow-y-auto pt-0.5"></div>
+      </div>
+
+      <!-- Direct Notability & PDF Import Box inside Sidebar (iPad-friendly!) -->
       <div class="p-2.5 bg-amber-500/10 border-b border-amber-500/25 space-y-1.5">
-        <div class="text-[11px] font-semibold text-amber-400">📂 讀取 I:\我的雲端硬碟\Notability</div>
+        <div class="text-[11px] font-semibold text-amber-400">📥 匯入 Notability (.note) 或 PDF 講義</div>
         <div class="flex gap-1.5">
-          <label class="flex-1 text-center py-1 px-2 rounded bg-amber-500 text-slate-950 font-semibold text-[11px] cursor-pointer hover:opacity-90">
-            選取 .note 檔案
-            <input id="sidebar-notability-files" type="file" accept=".note,.json" multiple class="hidden" />
+          <label class="flex-1 text-center py-1.5 px-2 rounded-lg bg-amber-500 text-slate-950 font-bold text-[11px] cursor-pointer hover:opacity-90 shadow-xs">
+            📄 選取 .note / PDF / plist
+            <input id="sidebar-notability-files" type="file" multiple class="hidden" />
           </label>
-          <label class="flex-1 text-center py-1 px-2 rounded bg-[var(--card)] text-[var(--foreground)] border border-[var(--border)] font-medium text-[11px] cursor-pointer hover:bg-[var(--secondary)]">
-            選整個資料夾
-            <input id="sidebar-notability-folder" type="file" webkitdirectory directory multiple class="hidden" />
-          </label>
+          <button id="btn-sidebar-cloud-import" type="button" class=" py-1.5 px-2.5 rounded-lg bg-[var(--card)] text-[var(--foreground)] border border-[var(--border)] font-medium text-[11px] cursor-pointer hover:bg-[var(--secondary)]" title="透過 Google 雲端硬碟同步整個 Notability 資料夾">
+            ☁️ 雲端載入
+          </button>
+        </div>
+        <div class="text-[10px] text-[var(--muted-foreground)] leading-snug">
+          💡 <strong>iPad 提示</strong>：若點 <code class="text-[var(--code-foreground)]">.note</code> 變成進入資料夾，請直接在裡面按「<strong>全選 (Session.plist + PDF)</strong>」再按「打開」即可完整匯入！
         </div>
       </div>
 
@@ -305,7 +402,7 @@
       <!-- Page Thumbnails Bar -->
       <div class="p-2.5 border-t border-[var(--border)] bg-[var(--secondary)]/30">
         <div class="flex items-center justify-between text-xs mb-1.5">
-          <span class="font-medium text-[var(--muted-foreground)]">當前筆記頁數</span>
+          <span class="font-medium text-[var(--muted-foreground)]">頁面快速跳轉</span>
           <span id="page-indicator" class="font-mono text-xs text-[var(--foreground)]">第 1 / 1 頁</span>
         </div>
         <div id="page-pills" class="flex items-center gap-1.5 overflow-x-auto pb-1"></div>
@@ -348,7 +445,7 @@
           💾 iPad 本機原檔 + ☁️ 模擬雲端
         </span>
         <span id="hardware-detect-badge" class="px-2 py-0.5 rounded-full bg-indigo-500/15 text-indigo-400 border border-indigo-500/30 font-medium">
-          ✒️ 支援：來回塗抹直接擦字 / 按住左下鍵即擦 / 筆尖或單指點紙2下切橡皮擦
+          📜 直式連續筆記模式：上下滑動跨頁書寫，寫到底部自動加頁
         </span>
         <span id="stroke-stats-badge" class="px-2 py-0.5 rounded-full bg-[var(--card)] text-[var(--muted-foreground)] border border-[var(--border)] font-mono">
           筆劃: 0 | 墓碑: 0
@@ -479,20 +576,48 @@
 
     const PAPER_BASE_WIDTH = 760;
     const PAPER_BASE_HEIGHT = 1020;
+    const PAGE_VERTICAL_GAP = 22;
     const STORAGE_KEY_LOCAL_IPAD = 'inkflow_ipad_local_db_v1';
     const STORAGE_KEY_GOOGLE_DRIVE = 'inkflow_simulated_gdrive_v1';
+    const STORAGE_KEY_SUBJECTS = 'inkflow_subjects_v1';
+
+    const DEFAULT_SUBJECTS = [
+      { id: 'subj_math', name: '📐 理工與微積分', color: '#3B82F6' },
+      { id: 'subj_lang', name: '🇯🇵 語言與人文', color: '#10B981' },
+      { id: 'subj_work', name: '💼 課程與專案', color: '#F59E0B' },
+      { id: 'subj_uncat', name: '📁 未分類筆記', color: '#94A3B8' }
+    ];
+
+    let subjectsDB = [];
+    try {
+      const savedSubj = localStorage.getItem(STORAGE_KEY_SUBJECTS);
+      subjectsDB = savedSubj ? JSON.parse(savedSubj) : DEFAULT_SUBJECTS;
+      if (!Array.isArray(subjectsDB) || subjectsDB.length === 0) subjectsDB = DEFAULT_SUBJECTS;
+    } catch (e) {
+      subjectsDB = DEFAULT_SUBJECTS;
+    }
+    function saveSubjectsDB() {
+      try { localStorage.setItem(STORAGE_KEY_SUBJECTS, JSON.stringify(subjectsDB)); } catch (e) {}
+    }
 
     const state = {
       deviceMode: 'ipad',
       sidebarOpen: window.innerWidth >= 768,
+      scrollMode: 'vertical', // 'vertical' (Notability continuous vertical writing) or 'single' (page flip)
+      selectedSubjectFilter: 'all',
       fingerAlwaysPan: true,
+      fingerDoubleTapEraser: true,
       scratchToEraseEnabled: true,
+      showFloatingEraserFab: true,
+      eraserRadius: 18,
       currentTool: 'pen',
       previousDrawTool: 'pen',
       currentColor: '#1E293B',
-      currentSize: 4.0,
+      currentSize: 3.6,
+      currentDash: 'solid', // 'solid' | 'dashed' | 'dotted'
       currentNoteId: 'note_calc_01',
       currentPageIndex: 0,
+      totalLogicalHeight: 1020,
       zoomScale: 1.0,
       activePointers: new Map(),
       isPinchingOrPanning: false,
@@ -827,8 +952,8 @@
     }
 
     // Convert parsed Notability Session.plist (and all nested plists) into InkFlow Note structure
-    function convertNotabilityPlistToInkFlow(fileName, plistBytesList) {
-      const cleanTitle = fileName.replace(/\.(note|zip)$/i, '');
+    function convertNotabilityPlistToInkFlow(fileName, plistBytesList, pdfPageDims = null) {
+      const cleanTitle = fileName.replace(/\.(note|zip|plist|pdf)$/i, '');
       const byteArrays = Array.isArray(plistBytesList) ? plistBytesList : [plistBytesList];
       const allPlists = [];
       for (const b of byteArrays) {
@@ -1026,10 +1151,15 @@
         }
       }
 
+      const defaultAspectRatio = (pdfPageDims && pdfPageDims.widthPt > 0 && pdfPageDims.heightPt > 0)
+        ? (pdfPageDims.heightPt / pdfPageDims.widthPt)
+        : (PAPER_BASE_HEIGHT / PAPER_BASE_WIDTH);
+      const targetPageHeight = Math.max(360, Math.min(1800, Math.round(PAPER_BASE_WIDTH * defaultAspectRatio)));
+
       const pagesMap = {};
       const ensurePage = (pageIdx) => {
         if (!pagesMap[pageIdx]) {
-          pagesMap[pageIdx] = { pageNumber: pageIdx + 1, strokes: {}, texts: {}, bgImage: null };
+          pagesMap[pageIdx] = { pageNumber: pageIdx + 1, pageHeight: targetPageHeight, strokes: {}, texts: {}, bgImage: null };
         }
         return pagesMap[pageIdx];
       };
@@ -1038,7 +1168,7 @@
       let totalExtractedStrokes = 0;
 
       if (rawStrokes.length > 0) {
-        // Auto-detect Notability page coordinate width & height from actual stroke bounds
+        // Auto-detect Notability page coordinate width & height from actual stroke bounds + PDF dimensions
         let maxCoordX = 0;
         let minCoordY = Infinity;
         for (const s of rawStrokes) {
@@ -1048,13 +1178,13 @@
           }
         }
 
-        let sourcePageWidth = 612; // Standard Notability PDF/Letter width in points
+        let sourcePageWidth = (pdfPageDims && pdfPageDims.widthPt > 100) ? pdfPageDims.widthPt : 612;
         if (maxCoordX <= 1.5) sourcePageWidth = 1.0;
-        else if (maxCoordX > 625 && maxCoordX <= 820) sourcePageWidth = 768;
-        else if (maxCoordX > 820) sourcePageWidth = maxCoordX * 1.04;
+        else if (maxCoordX > sourcePageWidth * 1.05 && maxCoordX <= 820) sourcePageWidth = 768;
+        else if (maxCoordX > 820) sourcePageWidth = maxCoordX * 1.03;
 
-        const scale = 760 / sourcePageWidth;
-        const pageHeightPt = sourcePageWidth * (1020 / 760);
+        const scale = PAPER_BASE_WIDTH / sourcePageWidth;
+        const pageHeightPt = sourcePageWidth * defaultAspectRatio;
         const yOffset = minCoordY < 0 ? -minCoordY : 0;
 
         rawStrokes.forEach((s, sIdx) => {
@@ -1066,8 +1196,8 @@
           const pageObj = ensurePage(pageIdx);
 
           const normalizedPoints = s.points.map(p => ({
-            x: Math.min(756, Math.max(4, p.x * scale)),
-            y: Math.min(1016, Math.max(4, ((p.y + yOffset) - pageIdx * pageHeightPt) * scale)),
+            x: Math.min(PAPER_BASE_WIDTH - 2, Math.max(2, p.x * scale)),
+            y: Math.min(targetPageHeight - 2, Math.max(2, ((p.y + yOffset) - pageIdx * pageHeightPt) * scale)),
             p: p.p || 0.7
           }));
 
@@ -1076,7 +1206,8 @@
             id: strokeId,
             tool: s.isHighlighter ? 'highlighter' : 'pen',
             color: s.hexColor,
-            size: Math.min(24, Math.max(1.8, s.rawWidth * (sourcePageWidth <= 1.5 ? 1 : scale))),
+            size: Math.min(24, Math.max(1.6, s.rawWidth * (sourcePageWidth <= 1.5 ? 1 : scale))),
+            dash: 'solid',
             device: 'Notability匯入',
             createdAt: Date.now(),
             updatedAt: Date.now(),
@@ -1109,16 +1240,22 @@
         const pg = ensurePage(pIdx);
         sortedPages.push({
           pageNumber: pIdx + 1,
+          pageHeight: pg.pageHeight || targetPageHeight,
           strokes: pg.strokes,
           texts: pg.texts,
           bgImage: pg.bgImage || null
         });
       }
 
+      const targetSubject = (state.selectedSubjectFilter && state.selectedSubjectFilter !== 'all')
+        ? state.selectedSubjectFilter
+        : 'subj_uncat';
+
       return {
         note: {
           id: `note_nb_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
           title: `📒 ${cleanTitle}`,
+          subjectId: targetSubject,
           template: 'grid',
           createdAt: Date.now(),
           updatedAt: Date.now(),
@@ -1131,7 +1268,7 @@
       };
     }
 
-    // Dynamically load pdf.js to render embedded PDFs inside .note archives
+    // Dynamically load pdf.js to render embedded PDFs inside .note archives or standalone PDF files
     async function ensurePdfJsLoaded() {
       if (window.pdfjsLib) return window.pdfjsLib;
       return new Promise((resolve) => {
@@ -1157,6 +1294,22 @@
       return `data:${mimeType};base64,${btoa(binary)}`;
     }
 
+    // Inspect first PDF page dimensions before converting strokes so coordinates & aspect ratio match 100%!
+    async function probeFirstPdfDimensions(unzippedFiles) {
+      const pdfKey = Object.keys(unzippedFiles).find(k => k.toLowerCase().endsWith('.pdf'));
+      if (!pdfKey) return null;
+      try {
+        const pdfjs = await ensurePdfJsLoaded();
+        if (!pdfjs) return null;
+        const pdfDoc = await pdfjs.getDocument({ data: unzippedFiles[pdfKey].slice() }).promise;
+        const page1 = await pdfDoc.getPage(1);
+        const vp = page1.getViewport({ scale: 1.0 });
+        return { widthPt: vp.width, heightPt: vp.height };
+      } catch (e) {
+        return null;
+      }
+    }
+
     async function enrichNoteWithEmbeddedPdfAndImages(note, unzippedFiles) {
       const entries = Object.keys(unzippedFiles);
       const pdfEntries = entries.filter(k => k.toLowerCase().endsWith('.pdf'));
@@ -1177,17 +1330,29 @@
               const pdfDoc = await loadingTask.promise;
               for (let pNum = 1; pNum <= pdfDoc.numPages; pNum++) {
                 const pageIdx = renderedPdfPages;
-                while (note.pages.length <= pageIdx) {
-                  note.pages.push({ pageNumber: note.pages.length + 1, strokes: {}, texts: {}, bgImage: null });
-                }
                 const pdfPage = await pdfDoc.getPage(pNum);
-                const viewport = pdfPage.getViewport({ scale: 1.5 });
+                const viewport = pdfPage.getViewport({ scale: 2.0 });
+                const exactPageHeight = Math.max(360, Math.min(1800, Math.round(PAPER_BASE_WIDTH * (viewport.height / viewport.width))));
+
+                while (note.pages.length <= pageIdx) {
+                  note.pages.push({
+                    pageNumber: note.pages.length + 1,
+                    pageHeight: exactPageHeight,
+                    strokes: {},
+                    texts: {},
+                    bgImage: null
+                  });
+                }
+                note.pages[pageIdx].pageHeight = exactPageHeight;
+
                 const offCanvas = document.createElement('canvas');
                 offCanvas.width = viewport.width;
                 offCanvas.height = viewport.height;
                 const offCtx = offCanvas.getContext('2d');
+                offCtx.fillStyle = '#FFFFFF';
+                offCtx.fillRect(0, 0, offCanvas.width, offCanvas.height);
                 await pdfPage.render({ canvasContext: offCtx, viewport }).promise;
-                note.pages[pageIdx].bgImage = offCanvas.toDataURL('image/jpeg', 0.84);
+                note.pages[pageIdx].bgImage = offCanvas.toDataURL('image/jpeg', 0.88);
                 note.template = 'blank';
                 renderedPdfPages++;
               }
@@ -1203,7 +1368,7 @@
           const lower = imgKey.toLowerCase();
           const mime = lower.endsWith('.png') ? 'image/png' : 'image/jpeg';
           while (note.pages.length <= idx) {
-            note.pages.push({ pageNumber: note.pages.length + 1, strokes: {}, texts: {}, bgImage: null });
+            note.pages.push({ pageNumber: note.pages.length + 1, pageHeight: PAPER_BASE_HEIGHT, strokes: {}, texts: {}, bgImage: null });
           }
           if (!note.pages[idx].bgImage) {
             note.pages[idx].bgImage = uint8ToBase64DataUrl(unzippedFiles[imgKey], mime);
@@ -1216,17 +1381,42 @@
 
     async function parseCompleteNotabilityFile(fileName, arrayBuffer) {
       const unzipped = await unzipNotabilityArchive(arrayBuffer);
+      return await buildNoteFromUnzippedMap(fileName, unzipped);
+    }
+
+    async function buildNoteFromUnzippedMap(fileName, unzipped) {
       const allKeys = Object.keys(unzipped);
       const plistKeys = allKeys
         .filter(k => k.toLowerCase().endsWith('.plist'))
         .sort((a, b) => (b.toLowerCase().endsWith('session.plist') ? 1 : 0) - (a.toLowerCase().endsWith('session.plist') ? 1 : 0));
 
+      const pdfDims = await probeFirstPdfDimensions(unzipped);
+
       if (plistKeys.length === 0) {
-        throw new Error(`壓縮檔內找不到 Session.plist (共發現 ${allKeys.length} 個檔案)`);
+        // If no plist but has PDF (e.g., a zipped PDF or PDF inside folder), build note from PDF!
+        const hasPdf = allKeys.some(k => k.toLowerCase().endsWith('.pdf'));
+        if (hasPdf) {
+          const cleanTitle = fileName.replace(/\.(note|zip|pdf)$/i, '');
+          const targetSubject = (state.selectedSubjectFilter && state.selectedSubjectFilter !== 'all') ? state.selectedSubjectFilter : 'subj_uncat';
+          const note = {
+            id: `note_pdf_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+            title: `📄 ${cleanTitle}`,
+            subjectId: targetSubject,
+            template: 'blank',
+            createdAt: Date.now(),
+            updatedAt: Date.now(),
+            lastOpenedAt: Date.now(),
+            offloaded: false,
+            pages: []
+          };
+          const pdfPageCount = await enrichNoteWithEmbeddedPdfAndImages(note, unzipped);
+          return { note, totalExtractedStrokes: 0, totalPages: note.pages.length, pdfPageCount };
+        }
+        throw new Error(`找不到 Session.plist 或 PDF (共發現 ${allKeys.length} 個檔案)`);
       }
 
       const plistBuffers = plistKeys.map(k => unzipped[k]);
-      const result = convertNotabilityPlistToInkFlow(fileName, plistBuffers);
+      const result = convertNotabilityPlistToInkFlow(fileName, plistBuffers, pdfDims);
       const pdfPageCount = await enrichNoteWithEmbeddedPdfAndImages(result.note, unzipped);
       result.totalPages = result.note.pages.length;
       result.pdfPageCount = pdfPageCount;
@@ -1235,9 +1425,20 @@
 
     async function handleNotabilityFilesUpload(fileList) {
       if (!fileList || fileList.length === 0) return;
-      const files = Array.from(fileList).filter(f => f.name.toLowerCase().endsWith('.note') || f.name.toLowerCase().endsWith('.json'));
-      if (files.length === 0) {
-        showToast('⚠️', '未找到 .note 或 .json 筆記檔', '請確認選取的資料夾或檔案中包含 Notability 的 .note 檔案。');
+      const rawFiles = Array.from(fileList);
+
+      // Group loose .plist + .pdf + image files if the user opened inside a .note package folder on iPad!
+      const loosePlists = rawFiles.filter(f => f.name.toLowerCase().endsWith('.plist'));
+      const archiveFiles = rawFiles.filter(f => {
+        const l = f.name.toLowerCase();
+        return l.endsWith('.note') || l.endsWith('.zip') || l.endsWith('.json');
+      });
+      const standalonePdfs = loosePlists.length === 0
+        ? rawFiles.filter(f => f.name.toLowerCase().endsWith('.pdf'))
+        : [];
+
+      if (loosePlists.length === 0 && archiveFiles.length === 0 && standalonePdfs.length === 0) {
+        showToast('⚠️', '未找到可匯入的筆記或 PDF', '請選取 .note、.pdf、.json，或在點進 .note 資料夾後選取裡面的 Session.plist 與 PDF！');
         return;
       }
 
@@ -1246,12 +1447,64 @@
       let totalPdfPagesAll = 0;
       let lastImportedId = null;
 
-      for (const file of files) {
+      // 1. Handle loose .plist (+ optional .pdf / images) selected from inside an opened .note folder on iPad!
+      if (loosePlists.length > 0) {
+        try {
+          const unzippedMap = {};
+          let folderTitle = 'Notability 匯入筆記';
+          for (const f of rawFiles) {
+            const l = f.name.toLowerCase();
+            if (l.endsWith('.plist') || l.endsWith('.pdf') || l.endsWith('.png') || l.endsWith('.jpg') || l.endsWith('.jpeg')) {
+              unzippedMap[f.webkitRelativePath || f.name] = new Uint8Array(await f.arrayBuffer());
+              if (f.webkitRelativePath) {
+                const parts = f.webkitRelativePath.split('/');
+                const notePart = parts.find(p => p.toLowerCase().endsWith('.note'));
+                if (notePart) folderTitle = notePart.replace(/\.note$/i, '');
+                else if (parts.length > 1) folderTitle = parts[0];
+              } else if (l.endsWith('.pdf')) {
+                folderTitle = f.name.replace(/\.pdf$/i, '');
+              }
+            }
+          }
+          showToast('⏳', `正在組合解析「${folderTitle}」...`, '正在還原 Session.plist 手寫筆跡與等比例 PDF 背景');
+          const { note, totalExtractedStrokes, totalPages, pdfPageCount } = await buildNoteFromUnzippedMap(folderTitle, unzippedMap);
+          cloudDriveDB[note.id] = note;
+          ipadLocalDB[note.id] = JSON.parse(JSON.stringify(note));
+          lastImportedId = note.id;
+          importedCount++;
+          totalStrokesAll += totalExtractedStrokes;
+          totalPdfPagesAll += (pdfPageCount || 0);
+          logAudit(`[iPad .note 內部檔匯入] 成功組合「${folderTitle}」：${totalPages} 頁、${totalExtractedStrokes} 筆劃`, 'merge');
+        } catch (err) {
+          showToast('⚠️', '解析 Session.plist 時發生錯誤', err.message);
+        }
+      }
+
+      // 2. Handle standalone .pdf files directly!
+      for (const pdfFile of standalonePdfs) {
+        try {
+          showToast('⏳', `正在高畫質等比例匯入 PDF「${pdfFile.name}」...`, '自動鎖定每一頁原始長寬比，絕不變形');
+          const buf = new Uint8Array(await pdfFile.arrayBuffer());
+          const { note, totalPages, pdfPageCount } = await buildNoteFromUnzippedMap(pdfFile.name, { [pdfFile.name]: buf });
+          cloudDriveDB[note.id] = note;
+          ipadLocalDB[note.id] = JSON.parse(JSON.stringify(note));
+          lastImportedId = note.id;
+          importedCount++;
+          totalPdfPagesAll += (pdfPageCount || totalPages);
+          logAudit(`[PDF 原生比例匯入] 成功匯入「${pdfFile.name}」：共 ${totalPages} 頁`, 'merge');
+        } catch (err) {
+          showToast('⚠️', `匯入 PDF ${pdfFile.name} 失敗`, err.message);
+        }
+      }
+
+      // 3. Handle .note / .zip / .json archives
+      for (const file of archiveFiles) {
         try {
           if (file.name.toLowerCase().endsWith('.json')) {
             const text = await file.text();
             const parsed = JSON.parse(text);
             if (parsed && parsed.pages) {
+              if (!parsed.subjectId) parsed.subjectId = (state.selectedSubjectFilter !== 'all' ? state.selectedSubjectFilter : 'subj_uncat');
               cloudDriveDB[parsed.id] = parsed;
               ipadLocalDB[parsed.id] = JSON.parse(JSON.stringify(parsed));
               lastImportedId = parsed.id;
@@ -1260,7 +1513,7 @@
             continue;
           }
 
-          showToast('⏳', `正在深度解析「${file.name}」...`, '解壓縮 Session.plist ($objects UID) 與內嵌 PDF / 圖片中');
+          showToast('⏳', `正在深度解析「${file.name}」...`, '解壓縮 Session.plist 與等比例 PDF 背景中');
           const buf = await file.arrayBuffer();
           const { note, totalExtractedStrokes, totalPages, pdfPageCount } = await parseCompleteNotabilityFile(file.name, buf);
           cloudDriveDB[note.id] = note;
@@ -1284,8 +1537,8 @@
         renderActivePage();
         showToast(
           '🎉',
-          `成功匯入 ${importedCount} 份 Notability 筆記！`,
-          `共還原 ${totalStrokesAll} 筆手寫筆劃${totalPdfPagesAll > 0 ? ` 與 ${totalPdfPagesAll} 頁 PDF 講義背景` : ''}！`
+          `成功匯入 ${importedCount} 份筆記 / PDF！`,
+          `共還原 ${totalStrokesAll} 筆手寫筆劃${totalPdfPagesAll > 0 ? ` 與 ${totalPdfPagesAll} 頁等比例 PDF 講義` : ''}！`
         );
       }
     }
@@ -1387,14 +1640,17 @@
     function setPaperZoom(newScale) {
       const clamped = Math.min(3.0, Math.max(0.38, newScale));
       state.zoomScale = clamped;
+      const totalH = state.totalLogicalHeight || PAPER_BASE_HEIGHT;
       const wrapper = document.getElementById('paper-scale-wrapper');
       const container = document.getElementById('paper-container');
       const scaledW = Math.round(PAPER_BASE_WIDTH * clamped);
-      const scaledH = Math.round(PAPER_BASE_HEIGHT * clamped);
+      const scaledH = Math.round(totalH * clamped);
 
-      // Lock container to base 760x1020 and scale uniformly from (0,0) so it never squishes or deforms
+      // Lock container to base 760 x totalH and scale uniformly from (0,0) so it never squishes or deforms
       container.style.width = `${PAPER_BASE_WIDTH}px`;
-      container.style.height = `${PAPER_BASE_HEIGHT}px`;
+      container.style.minWidth = `${PAPER_BASE_WIDTH}px`;
+      container.style.height = `${totalH}px`;
+      container.style.minHeight = `${totalH}px`;
       container.style.transformOrigin = '0 0';
       container.style.transform = `scale(${clamped})`;
 
@@ -1421,8 +1677,8 @@
     function createInitialDemoNotes() {
       const now = Date.now();
       const fortyDaysAgo = now - (42 * 24 * 60 * 60 * 1000);
-      const makeCurve = (id, pts, color, size, tool = 'pen', device = 'iPad') => ({
-        id, tool, color, size, device,
+      const makeCurve = (id, pts, color, size, tool = 'pen', device = 'iPad', dash = 'solid') => ({
+        id, tool, color, size, dash, device,
         createdAt: now - 3600000,
         updatedAt: now - 3600000,
         deleted: false,
@@ -1433,36 +1689,50 @@
         'note_calc_01': {
           id: 'note_calc_01',
           title: '微積分與系統架構筆記',
+          subjectId: 'subj_math',
           template: 'cornell',
           createdAt: now - 86400000 * 5,
           updatedAt: now - 120000,
           lastOpenedAt: now,
-          pages: [{
-            pageNumber: 1,
-            strokes: {
-              'stk_demo_highlight_1': makeCurve('stk_demo_highlight_1', [[235, 138, 0.8], [350, 138, 0.8], [495, 138, 0.8]], '#FACC15', 18, 'highlighter', 'iPad'),
-              'stk_demo_underline': makeCurve('stk_demo_underline', [[235, 232, 0.7], [380, 230, 0.8], [540, 233, 0.6]], '#1D4ED8', 3.5, 'pen', 'iPad'),
-              'stk_demo_arrow': makeCurve('stk_demo_arrow', [[180, 315, 0.6], [205, 315, 0.7], [225, 315, 0.8], [216, 307, 0.7], [225, 315, 0.8], [216, 323, 0.7]], '#DC2626', 3.5, 'pen', 'iPad'),
-              'stk_demo_box': makeCurve('stk_demo_box', [[235, 505, 0.6], [700, 505, 0.6], [700, 660, 0.6], [235, 660, 0.6], [235, 505, 0.6]], '#059669', 3.0, 'pen', 'iPad')
+          pages: [
+            {
+              pageNumber: 1,
+              pageHeight: 1020,
+              strokes: {
+                'stk_demo_highlight_1': makeCurve('stk_demo_highlight_1', [[235, 138, 0.8], [350, 138, 0.8], [495, 138, 0.8]], '#FACC15', 18, 'highlighter', 'iPad'),
+                'stk_demo_underline': makeCurve('stk_demo_underline', [[235, 232, 0.7], [380, 230, 0.8], [540, 233, 0.6]], '#1D4ED8', 3.5, 'pen', 'iPad'),
+                'stk_demo_arrow': makeCurve('stk_demo_arrow', [[180, 315, 0.6], [205, 315, 0.7], [225, 315, 0.8], [216, 307, 0.7], [225, 315, 0.8], [216, 323, 0.7]], '#DC2626', 3.5, 'pen', 'iPad'),
+                'stk_demo_box': makeCurve('stk_demo_box', [[235, 505, 0.6], [700, 505, 0.6], [700, 660, 0.6], [235, 660, 0.6], [235, 505, 0.6]], '#059669', 3.0, 'pen', 'iPad', 'dashed')
+              },
+              texts: {
+                'txt_demo_1': { id: 'txt_demo_1', x: 235, y: 118, text: 'Ch.4 直式連續書寫 ＆ 分類歸檔 ＆ PDF 等比例匯入', color: '#1E293B', fontSize: 19, updatedAt: now - 3600000, deleted: false },
+                'txt_demo_2': { id: 'txt_demo_2', x: 36, y: 185, text: '全新升級：\n1. 直式連續捲頁\n2. 左側分類項目\n3. 虛線/多段粗細\n4. PDF 等比不變形', color: '#1D4ED8', fontSize: 14, updatedAt: now - 3600000, deleted: false },
+                'txt_demo_3': { id: 'txt_demo_3', x: 235, y: 195, text: '往下滑動即可直接跨頁連續書寫（寫到最後一頁底部會自動加頁）：', color: '#334155', fontSize: 15, updatedAt: now - 3600000, deleted: false },
+                'txt_demo_4': { id: 'txt_demo_4', x: 238, y: 300, text: 'iPad 點「📥 匯入 (.note / PDF)」可直接選 .note、.pdf 或 Session.plist！', color: '#DC2626', fontSize: 16, updatedAt: now - 3600000, deleted: false },
+                'txt_demo_5': { id: 'txt_demo_5', x: 252, y: 535, text: '💡 實用技巧：\n• 點上方「🧹 橡皮擦 ▾」可展開設定：調整橡皮擦大小、單指點兩下切橡皮擦、來回塗抹消除\n• 左側目錄支援新增「📁 分類項目 (Subjects)」，可將筆記自由歸檔！\n• 支援實線 (──)、虛線 (- -)、點線 (···) 與 1~20px 粗細無段微調！', color: '#065F46', fontSize: 13.5, updatedAt: now - 3600000, deleted: false }
+              }
             },
-            texts: {
-              'txt_demo_1': { id: 'txt_demo_1', x: 235, y: 118, text: 'Ch.4 雙端無衝突同步 & Notability .note 直接匯入', color: '#1E293B', fontSize: 19, updatedAt: now - 3600000, deleted: false },
-              'txt_demo_2': { id: 'txt_demo_2', x: 36, y: 185, text: '核心觀念：\n1. 支援 .note 直讀\n2. Pencil 自動寫字\n3. 手指自動滑動\n4. 點兩下切橡皮擦', color: '#1D4ED8', fontSize: 14, updatedAt: now - 3600000, deleted: false },
-              'txt_demo_3': { id: 'txt_demo_3', x: 235, y: 195, text: '點擊上方橘色「📥 匯入 Notability (.note)」或「📂 選取整個資料夾」：', color: '#334155', fontSize: 15, updatedAt: now - 3600000, deleted: false },
-              'txt_demo_4': { id: 'txt_demo_4', x: 238, y: 300, text: '可直接選擇你電腦的 I:\\我的雲端硬碟\\Notability 資料夾！', color: '#DC2626', fontSize: 16, updatedAt: now - 3600000, deleted: false },
-              'txt_demo_5': { id: 'txt_demo_5', x: 252, y: 535, text: '📂 如何載入你的 Notability 筆記：\n• 點右上角橘色「📥 匯入 Notability (.note)」，直接選 I:\\我的雲端硬碟\\Notability\n• 程式會自動解開 .note 內的 Session.plist，把你以前寫的每一筆劃無損還原！\n• 還原後可直接拿「🧹 橡皮擦」擦除或「🧲 套索」移動舊字跡！', color: '#065F46', fontSize: 13.5, updatedAt: now - 3600000, deleted: false }
+            {
+              pageNumber: 2,
+              pageHeight: 1020,
+              strokes: {},
+              texts: {
+                'txt_demo_p2': { id: 'txt_demo_p2', x: 235, y: 120, text: '📄 第 2 頁（直式連續捲動頁面 — 在此頁底部書寫會自動新增第 3 頁！）', color: '#64748B', fontSize: 15, updatedAt: now - 3600000, deleted: false }
+              }
             }
-          }]
+          ]
         },
         'note_japanese_02': {
           id: 'note_japanese_02',
           title: '日文 N2 文法手寫整理',
+          subjectId: 'subj_lang',
           template: 'grid',
           createdAt: fortyDaysAgo,
           updatedAt: fortyDaysAgo,
           lastOpenedAt: fortyDaysAgo,
           pages: [{
             pageNumber: 1,
+            pageHeight: 1020,
             strokes: {
               'stk_jp_1': makeCurve('stk_jp_1', [[80, 140, 0.7], [280, 140, 0.7]], '#DC2626', 4.0, 'pen', 'iPad')
             },
@@ -1597,6 +1867,7 @@
 
         merged.pages.push({
           pageNumber: i + 1,
+          pageHeight: pageA.pageHeight || pageB.pageHeight || PAPER_BASE_HEIGHT,
           strokes: mergedStrokes,
           texts: mergedTexts,
           bgImage: pageA.bgImage || pageB.bgImage || null
@@ -1680,70 +1951,111 @@
     const inkCtx = inkCanvas.getContext('2d');
     const overlayCtx = overlayCanvas.getContext('2d');
 
-    // Configure 3x Retina HiDPI backing store so curves stay razor-sharp even when zoomed in on iPad
-    const CANVAS_DPR = Math.min(3, Math.max(2, (window.devicePixelRatio || 2) * 1.25));
-    function setupHiDpiCanvases() {
-      [bgCanvas, inkCanvas, overlayCanvas].forEach(c => {
-        c.width = Math.round(PAPER_BASE_WIDTH * CANVAS_DPR);
-        c.height = Math.round(PAPER_BASE_HEIGHT * CANVAS_DPR);
-        c.style.width = `${PAPER_BASE_WIDTH}px`;
-        c.style.height = `${PAPER_BASE_HEIGHT}px`;
-        const cCtx = c.getContext('2d');
-        cCtx.setTransform(CANVAS_DPR, 0, 0, CANVAS_DPR, 0, 0);
-        cCtx.imageSmoothingEnabled = true;
-        cCtx.imageSmoothingQuality = 'high';
-      });
-    }
-    setupHiDpiCanvases();
+    // Configure Retina HiDPI backing store dynamically sized to the vertical page stack (safe within WebKit 16384px limit)
+    const BASE_CANVAS_DPR = Math.min(3, Math.max(2, (window.devicePixelRatio || 2) * 1.25));
+    let currentEffectiveDpr = BASE_CANVAS_DPR;
 
-    function drawPaperTemplate(templateName) {
-      const w = PAPER_BASE_WIDTH, h = PAPER_BASE_HEIGHT;
-      bgCtx.clearRect(0, 0, w, h);
-      bgCtx.fillStyle = '#FDFBF7';
-      bgCtx.fillRect(0, 0, w, h);
+    function getPageLayoutMetrics(note) {
+      if (!note || !note.pages || note.pages.length === 0) {
+        return {
+          pageSlots: [{ pageIndex: 0, yStart: 0, height: PAPER_BASE_HEIGHT, yEnd: PAPER_BASE_HEIGHT }],
+          totalHeight: PAPER_BASE_HEIGHT
+        };
+      }
+      if (state.scrollMode === 'single') {
+        const idx = Math.min(note.pages.length - 1, Math.max(0, state.currentPageIndex));
+        const pg = note.pages[idx];
+        const h = pg.pageHeight || PAPER_BASE_HEIGHT;
+        return {
+          pageSlots: [{ pageIndex: idx, yStart: 0, height: h, yEnd: h }],
+          totalHeight: h
+        };
+      }
+      // Vertical continuous mode: stack all pages vertically with PAGE_VERTICAL_GAP between sheets
+      const slots = [];
+      let curY = 0;
+      for (let i = 0; i < note.pages.length; i++) {
+        const pg = note.pages[i];
+        const h = pg.pageHeight || PAPER_BASE_HEIGHT;
+        slots.push({ pageIndex: i, yStart: curY, height: h, yEnd: curY + h });
+        curY += h + PAGE_VERTICAL_GAP;
+      }
+      const totalHeight = Math.max(400, curY - PAGE_VERTICAL_GAP);
+      return { pageSlots: slots, totalHeight };
+    }
+
+    function syncCanvasStackHeight(totalHeight) {
+      const safeTotalH = Math.max(360, Math.round(totalHeight || PAPER_BASE_HEIGHT));
+      // Keep physical pixel height safely under Safari WebKit's 16,384px canvas limit
+      const maxDprForHeight = Math.max(1.0, Math.floor((14800 / safeTotalH) * 20) / 20);
+      const targetDpr = Math.min(BASE_CANVAS_DPR, maxDprForHeight);
+      const targetPhysW = Math.round(PAPER_BASE_WIDTH * targetDpr);
+      const targetPhysH = Math.round(safeTotalH * targetDpr);
+
+      if (state.totalLogicalHeight !== safeTotalH || bgCanvas.height !== targetPhysH || currentEffectiveDpr !== targetDpr) {
+        state.totalLogicalHeight = safeTotalH;
+        currentEffectiveDpr = targetDpr;
+        [bgCanvas, inkCanvas, overlayCanvas].forEach(c => {
+          c.width = targetPhysW;
+          c.height = targetPhysH;
+          c.style.width = `${PAPER_BASE_WIDTH}px`;
+          c.style.height = `${safeTotalH}px`;
+          const cCtx = c.getContext('2d');
+          cCtx.setTransform(targetDpr, 0, 0, targetDpr, 0, 0);
+          cCtx.imageSmoothingEnabled = true;
+          cCtx.imageSmoothingQuality = 'high';
+        });
+        setPaperZoom(state.zoomScale);
+      }
+    }
+    syncCanvasStackHeight(PAPER_BASE_HEIGHT);
+
+    function drawPaperTemplateOnSheet(ctx, templateName, w, h) {
+      ctx.fillStyle = '#FDFBF7';
+      ctx.fillRect(0, 0, w, h);
 
       if (templateName === 'grid') {
-        bgCtx.strokeStyle = 'rgba(148, 163, 184, 0.28)';
-        bgCtx.lineWidth = 1;
-        bgCtx.beginPath();
-        for (let x = 28; x < w; x += 28) { bgCtx.moveTo(x, 0); bgCtx.lineTo(x, h); }
-        for (let y = 28; y < h; y += 28) { bgCtx.moveTo(0, y); bgCtx.lineTo(w, y); }
-        bgCtx.stroke();
+        ctx.strokeStyle = 'rgba(148, 163, 184, 0.28)';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        for (let x = 28; x < w; x += 28) { ctx.moveTo(x, 0); ctx.lineTo(x, h); }
+        for (let y = 28; y < h; y += 28) { ctx.moveTo(0, y); ctx.lineTo(w, y); }
+        ctx.stroke();
       } else if (templateName === 'ruled') {
-        bgCtx.strokeStyle = 'rgba(239, 68, 68, 0.35)';
-        bgCtx.lineWidth = 1.5;
-        bgCtx.beginPath(); bgCtx.moveTo(76, 0); bgCtx.lineTo(76, h); bgCtx.stroke();
+        ctx.strokeStyle = 'rgba(239, 68, 68, 0.35)';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath(); ctx.moveTo(76, 0); ctx.lineTo(76, h); ctx.stroke();
 
-        bgCtx.strokeStyle = 'rgba(148, 163, 184, 0.35)';
-        bgCtx.lineWidth = 1;
-        bgCtx.beginPath();
-        for (let y = 80; y < h - 30; y += 34) { bgCtx.moveTo(0, y); bgCtx.lineTo(w, y); }
-        bgCtx.stroke();
+        ctx.strokeStyle = 'rgba(148, 163, 184, 0.35)';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        for (let y = 80; y < h - 30; y += 34) { ctx.moveTo(0, y); ctx.lineTo(w, y); }
+        ctx.stroke();
       } else if (templateName === 'cornell') {
-        bgCtx.strokeStyle = 'rgba(100, 116, 139, 0.45)';
-        bgCtx.lineWidth = 1.5;
-        bgCtx.beginPath();
-        bgCtx.moveTo(28, 90); bgCtx.lineTo(w - 28, 90);
-        bgCtx.moveTo(210, 90); bgCtx.lineTo(210, h - 160);
-        bgCtx.moveTo(28, h - 160); bgCtx.lineTo(w - 28, h - 160);
-        bgCtx.stroke();
+        ctx.strokeStyle = 'rgba(100, 116, 139, 0.45)';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(28, 90); ctx.lineTo(w - 28, 90);
+        ctx.moveTo(210, 90); ctx.lineTo(210, h - 160);
+        ctx.moveTo(28, h - 160); ctx.lineTo(w - 28, h - 160);
+        ctx.stroke();
 
-        bgCtx.strokeStyle = 'rgba(148, 163, 184, 0.26)';
-        bgCtx.lineWidth = 1;
-        bgCtx.beginPath();
-        for (let y = 126; y < h - 165; y += 32) { bgCtx.moveTo(210, y); bgCtx.lineTo(w - 28, y); }
-        bgCtx.stroke();
+        ctx.strokeStyle = 'rgba(148, 163, 184, 0.26)';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        for (let y = 126; y < h - 165; y += 32) { ctx.moveTo(210, y); ctx.lineTo(w - 28, y); }
+        ctx.stroke();
 
-        bgCtx.fillStyle = 'rgba(100, 116, 139, 0.65)';
-        bgCtx.font = '600 11px -apple-system, sans-serif';
-        bgCtx.fillText('關鍵字 / 索引欄 (Cues)', 36, 112);
-        bgCtx.fillText('主要手寫筆記區 (Notes)', 225, 112);
-        bgCtx.fillText('本頁總結 (Summary)', 36, h - 140);
+        ctx.fillStyle = 'rgba(100, 116, 139, 0.65)';
+        ctx.font = '600 11px -apple-system, sans-serif';
+        ctx.fillText('關鍵字 / 索引欄 (Cues)', 36, 112);
+        ctx.fillText('主要手寫筆記區 (Notes)', 225, 112);
+        ctx.fillText('本頁總結 (Summary)', 36, h - 140);
       } else if (templateName === 'dotted') {
-        bgCtx.fillStyle = 'rgba(148, 163, 184, 0.55)';
+        ctx.fillStyle = 'rgba(148, 163, 184, 0.55)';
         for (let x = 28; x < w; x += 28) {
           for (let y = 28; y < h; y += 28) {
-            bgCtx.beginPath(); bgCtx.arc(x, y, 1.3, 0, Math.PI * 2); bgCtx.fill();
+            ctx.beginPath(); ctx.arc(x, y, 1.3, 0, Math.PI * 2); ctx.fill();
           }
         }
       }
@@ -1815,6 +2127,15 @@
       ctx.strokeStyle = stroke.color;
       ctx.fillStyle = stroke.color;
 
+      const dashStyle = stroke.dash || 'solid';
+      if (dashStyle === 'dashed') {
+        ctx.setLineDash([Math.max(7, stroke.size * 2.5), Math.max(5, stroke.size * 1.85)]);
+      } else if (dashStyle === 'dotted') {
+        ctx.setLineDash([0.5, Math.max(4.5, stroke.size * 2.1)]);
+      } else {
+        ctx.setLineDash([]);
+      }
+
       if (stroke.tool === 'highlighter') {
         ctx.globalAlpha = 0.36;
         ctx.globalCompositeOperation = 'multiply';
@@ -1826,8 +2147,8 @@
         } else {
           drawContinuousQuadSpline(ctx, pts);
         }
-      } else if (stroke.tool === 'ballpoint' || pts.length <= 2) {
-        // Notability Classic Uniform Ballpoint: 100% seamless single continuous Quadratic Bezier spline
+      } else if (stroke.tool === 'ballpoint' || dashStyle !== 'solid' || pts.length <= 2) {
+        // Uniform Ballpoint OR Dashed/Dotted stroke: single continuous Quadratic Bezier spline
         if (pts.length === 1) {
           ctx.beginPath();
           ctx.arc(pts[0].x, pts[0].y, stroke.size * 0.52, 0, Math.PI * 2);
@@ -1838,7 +2159,6 @@
         }
       } else {
         // Notability Silky Pressure Fountain/Gel Pen:
-        // Subdivides each Quadratic Bezier midpoint arc into ultra-smooth micro-curves with gentle pressure & taper
         const n = pts.length;
         const widths = new Array(n);
         let smoothP = pts[0].p || 0.65;
@@ -1847,25 +2167,22 @@
         for (let i = 0; i < n; i++) {
           const rawP = pts[i].p || 0.65;
           smoothP = smoothP * 0.76 + rawP * 0.24;
-          // Gentle natural start & end taper (like Notability ink tip)
           let taper = 1.0;
           if (n >= 6) {
             if (i === 0) taper = 0.78;
             else if (i === n - 1) taper = 0.72;
             else if (i === n - 2) taper = 0.86;
           }
-          const w = Math.max(1.15, stroke.size * (0.64 + smoothP * 0.58) * taper);
+          const w = Math.max(1.0, stroke.size * (0.64 + smoothP * 0.58) * taper);
           widths[i] = w;
           if (w < minW) minW = w;
           if (w > maxW) maxW = w;
         }
 
-        // If pressure is nearly constant, render as a single continuous Bezier path for zero-seam perfection
         if (maxW - minW < 0.32) {
           ctx.lineWidth = (minW + maxW) * 0.5;
           drawContinuousQuadSpline(ctx, pts);
         } else {
-          // Render subdivided Quadratic Bezier spans so curves are 100% round with silky width transitions
           let prevEnd = pts[0];
           let prevW = widths[0];
 
@@ -1901,7 +2218,6 @@
             prevW = targetW;
           }
 
-          // Final segment to last point
           const lastPt = pts[n - 1];
           ctx.lineWidth = (prevW + widths[n - 1]) * 0.5;
           ctx.beginPath();
@@ -1930,37 +2246,91 @@
 
       document.getElementById('note-title-input').value = note.title;
       document.getElementById('paper-template-select').value = note.template || 'grid';
-      drawPaperTemplate(note.template || 'grid');
-
-      const page = note.pages[state.currentPageIndex] || note.pages[0];
-      if (page && page.bgImage) {
-        const cachedImg = _bgImgCache.get(page.bgImage);
-        if (cachedImg && cachedImg.complete) {
-          bgCtx.drawImage(cachedImg, 0, 0, PAPER_BASE_WIDTH, PAPER_BASE_HEIGHT);
-        } else if (!cachedImg) {
-          const img = new Image();
-          img.onload = () => renderActivePage();
-          img.src = page.bgImage;
-          _bgImgCache.set(page.bgImage, img);
-        }
+      const subjSelect = document.getElementById('current-note-subject');
+      if (subjSelect) {
+        subjSelect.value = note.subjectId || 'subj_uncat';
       }
 
-      inkCtx.clearRect(0, 0, PAPER_BASE_WIDTH, PAPER_BASE_HEIGHT);
+      const { pageSlots, totalHeight } = getPageLayoutMetrics(note);
+      syncCanvasStackHeight(totalHeight);
 
-      const strokesList = Object.values(page.strokes || {});
-      strokesList.filter(s => !s.deleted && s.tool === 'highlighter').forEach(s => drawSingleStroke(inkCtx, s, state.selectedStrokeIds.has(s.id)));
-      strokesList.filter(s => !s.deleted && s.tool !== 'highlighter').forEach(s => drawSingleStroke(inkCtx, s, state.selectedStrokeIds.has(s.id)));
+      bgCtx.clearRect(0, 0, PAPER_BASE_WIDTH, totalHeight);
+      inkCtx.clearRect(0, 0, PAPER_BASE_WIDTH, totalHeight);
 
-      Object.values(page.texts || {}).forEach(txt => {
-        if (!txt || txt.deleted) return;
+      // Fill background behind page gaps in vertical continuous mode
+      if (pageSlots.length > 1) {
+        bgCtx.fillStyle = '#0f172a';
+        bgCtx.fillRect(0, 0, PAPER_BASE_WIDTH, totalHeight);
+      }
+
+      for (const slot of pageSlots) {
+        const page = note.pages[slot.pageIndex];
+        if (!page) continue;
+
+        bgCtx.save();
+        bgCtx.translate(0, slot.yStart);
+        drawPaperTemplateOnSheet(bgCtx, note.template || 'grid', PAPER_BASE_WIDTH, slot.height);
+
+        if (page.bgImage) {
+          const cachedImg = _bgImgCache.get(page.bgImage);
+          if (cachedImg && cachedImg.complete && cachedImg.naturalWidth > 0) {
+            const imgW = cachedImg.naturalWidth;
+            const imgH = cachedImg.naturalHeight;
+            const expectedPageH = Math.max(360, Math.min(1800, Math.round(PAPER_BASE_WIDTH * (imgH / imgW))));
+            // If an older imported PDF page didn't have its true aspect-ratio pageHeight set, auto-correct it!
+            if (Math.abs((page.pageHeight || PAPER_BASE_HEIGHT) - expectedPageH) > 8) {
+              page.pageHeight = expectedPageH;
+              bgCtx.restore();
+              requestAnimationFrame(() => renderActivePage());
+              return;
+            }
+            // Draw PDF/image with 100% aspect-ratio preservation (contain) so it NEVER stretches or deforms!
+            const scale = Math.min(PAPER_BASE_WIDTH / imgW, slot.height / imgH);
+            const drawW = imgW * scale;
+            const drawH = imgH * scale;
+            const drawX = (PAPER_BASE_WIDTH - drawW) * 0.5;
+            const drawY = (slot.height - drawH) * 0.5;
+            bgCtx.drawImage(cachedImg, drawX, drawY, drawW, drawH);
+          } else if (!cachedImg) {
+            const img = new Image();
+            img.onload = () => renderActivePage();
+            img.src = page.bgImage;
+            _bgImgCache.set(page.bgImage, img);
+          }
+        }
+
+        // Subtle page number watermark & divider in vertical mode
+        if (state.scrollMode === 'vertical') {
+          bgCtx.fillStyle = 'rgba(100, 116, 139, 0.55)';
+          bgCtx.font = '600 11px ui-monospace, SFMono-Regular, monospace';
+          bgCtx.fillText(`Page ${slot.pageIndex + 1} / ${note.pages.length}`, PAPER_BASE_WIDTH - 92, slot.height - 12);
+        }
+        bgCtx.restore();
+
+        // Draw strokes & texts for this page
         inkCtx.save();
-        inkCtx.fillStyle = txt.color || '#1E293B';
-        inkCtx.font = `500 ${txt.fontSize || 16}px -apple-system, BlinkMacSystemFont, "PingFang TC", sans-serif`;
-        String(txt.text).split('\n').forEach((line, idx) => {
-          inkCtx.fillText(line, txt.x, txt.y + idx * ((txt.fontSize || 16) * 1.45));
+        inkCtx.translate(0, slot.yStart);
+        const isCurrentPage = slot.pageIndex === state.currentPageIndex;
+        const strokesList = Object.values(page.strokes || {});
+        strokesList.filter(s => !s.deleted && s.tool === 'highlighter').forEach(s => {
+          drawSingleStroke(inkCtx, s, isCurrentPage && state.selectedStrokeIds.has(s.id));
+        });
+        strokesList.filter(s => !s.deleted && s.tool !== 'highlighter').forEach(s => {
+          drawSingleStroke(inkCtx, s, isCurrentPage && state.selectedStrokeIds.has(s.id));
+        });
+
+        Object.values(page.texts || {}).forEach(txt => {
+          if (!txt || txt.deleted) return;
+          inkCtx.save();
+          inkCtx.fillStyle = txt.color || '#1E293B';
+          inkCtx.font = `500 ${txt.fontSize || 16}px -apple-system, BlinkMacSystemFont, "PingFang TC", sans-serif`;
+          String(txt.text).split('\n').forEach((line, idx) => {
+            inkCtx.fillText(line, txt.x, txt.y + idx * ((txt.fontSize || 16) * 1.45));
+          });
+          inkCtx.restore();
         });
         inkCtx.restore();
-      });
+      }
 
       updateStatusBadges();
       renderPagePills(note);
@@ -1971,15 +2341,56 @@
      ***********************************************************************/
     const viewportEl = document.getElementById('canvas-viewport');
 
-    function getCanvasCoords(e) {
+    function getActivePageSlot(note) {
+      const { pageSlots } = getPageLayoutMetrics(note);
+      return pageSlots.find(s => s.pageIndex === state.currentPageIndex) || pageSlots[0];
+    }
+
+    function getCanvasCoords(e, selectPageOnTouch = false) {
       const rect = inkCanvas.getBoundingClientRect();
+      const totalH = state.totalLogicalHeight || PAPER_BASE_HEIGHT;
       const scaleX = PAPER_BASE_WIDTH / rect.width;
-      const scaleY = PAPER_BASE_HEIGHT / rect.height;
+      const scaleY = totalH / rect.height;
+      const globalX = (e.clientX - rect.left) * scaleX;
+      const globalY = (e.clientY - rect.top) * scaleY;
+
+      const note = getActiveNote();
+      const { pageSlots } = getPageLayoutMetrics(note);
+
+      if (selectPageOnTouch && state.scrollMode === 'vertical' && pageSlots.length > 1) {
+        for (const slot of pageSlots) {
+          if (globalY >= slot.yStart - (PAGE_VERTICAL_GAP * 0.5) && globalY <= slot.yEnd + (PAGE_VERTICAL_GAP * 0.5)) {
+            if (state.currentPageIndex !== slot.pageIndex) {
+              state.currentPageIndex = slot.pageIndex;
+              state.selectedStrokeIds.clear();
+              renderPagePills(note);
+            }
+            break;
+          }
+        }
+      }
+
+      const activeSlot = pageSlots.find(s => s.pageIndex === state.currentPageIndex) || pageSlots[0];
+      const localY = globalY - (activeSlot ? activeSlot.yStart : 0);
+
       return {
-        x: (e.clientX - rect.left) * scaleX,
-        y: (e.clientY - rect.top) * scaleY,
+        x: globalX,
+        y: localY,
+        globalY,
         p: e.pointerType === 'pen' ? (e.pressure || 0.7) : 0.65
       };
+    }
+
+    function drawLiveOverlayStroke() {
+      const totalH = state.totalLogicalHeight || PAPER_BASE_HEIGHT;
+      overlayCtx.clearRect(0, 0, PAPER_BASE_WIDTH, totalH);
+      if (!state.currentStroke) return;
+      const note = getActiveNote();
+      const slot = getActivePageSlot(note);
+      overlayCtx.save();
+      if (slot) overlayCtx.translate(0, slot.yStart);
+      drawSingleStroke(overlayCtx, state.currentStroke);
+      overlayCtx.restore();
     }
 
     function cancelActiveDrawing() {
@@ -1989,7 +2400,7 @@
       state.currentStroke = null;
       state.lassoPoints = [];
       state.isDraggingLasso = false;
-      overlayCtx.clearRect(0, 0, PAPER_BASE_WIDTH, PAPER_BASE_HEIGHT);
+      overlayCtx.clearRect(0, 0, PAPER_BASE_WIDTH, state.totalLogicalHeight || PAPER_BASE_HEIGHT);
     }
 
     function getTwoFingerMetrics() {
@@ -2004,6 +2415,9 @@
     }
 
     function startDrawingOrToolAction(e, pt) {
+      // Auto-close Eraser Popover when user starts writing/erasing on canvas
+      document.getElementById('eraser-popover')?.classList.add('hidden');
+
       const note = getActiveNote();
       const page = note.pages[state.currentPageIndex];
       state.activeDrawingPointerId = e.pointerId ?? 'stylus';
@@ -2052,14 +2466,14 @@
         tool: state.currentTool,
         color: state.currentTool === 'highlighter' && state.currentColor === '#1E293B' ? '#FACC15' : state.currentColor,
         size: state.currentTool === 'highlighter' ? Math.max(16, state.currentSize * 3.8) : state.currentSize,
+        dash: state.currentTool === 'highlighter' ? 'solid' : (state.currentDash || 'solid'),
         device: state.deviceMode === 'ipad' ? 'iPad' : 'iPhone',
         createdAt: Date.now(),
         updatedAt: Date.now(),
         deleted: false,
         points: [pt]
       };
-      overlayCtx.clearRect(0, 0, PAPER_BASE_WIDTH, PAPER_BASE_HEIGHT);
-      drawSingleStroke(overlayCtx, state.currentStroke);
+      drawLiveOverlayStroke();
     }
 
     function getStrokeBoundingSpan(stroke) {
@@ -2352,7 +2766,7 @@
               pointerId: 'stylus_touch',
               type: 'touchstart'
             };
-            const pt = getCanvasCoords(synthEvent);
+            const pt = getCanvasCoords(synthEvent, true);
             state.pointerDownPos = pt;
             state.pointerDownTime = Date.now();
             startDrawingOrToolAction(synthEvent, pt);
@@ -2414,22 +2828,16 @@
       const now = Date.now();
 
       // PALM REJECTION GUARD:
-      // If Apple Pencil is currently drawing OR was drawing within the last 420ms (e.g. moving between strokes of "日"),
-      // ignore any single-finger/palm "touch" event so the palm NEVER cancels or aborts the Pencil stroke!
       if (e.pointerType === 'touch') {
         if ((state.isDrawing && state.activeDrawingPointerType === 'pen') || (now - state.lastPenActivityTime < 420)) {
           return;
         }
       }
 
-      // NOTE: Do NOT call inkCanvas.setPointerCapture(e.pointerId) for Apple Pencil ('pen')!
-      // In iPadOS WebKit, setPointerCapture on rapid micro-strokes (like the 3rd & 4th stroke of "日")
-      // causes a race condition on pointerup that swallows the next stroke's pointerdown!
       if (e.pointerType !== 'pen') {
         try { inkCanvas.setPointerCapture(e.pointerId); } catch (_) {}
       } else {
         state.lastPenActivityTime = now;
-        // If a previous pen stroke got stuck without pointerup, commit it cleanly first before starting the new stroke
         if (state.isDrawing && state.currentStroke && state.currentStroke.points.length > 0) {
           const note = getActiveNote();
           const page = note.pages[state.currentPageIndex];
@@ -2443,10 +2851,12 @@
 
       const hwBadge = document.getElementById('hardware-detect-badge');
       if (e.pointerType === 'pen') {
-        hwBadge.textContent = '✒️ Apple Pencil 書寫中（單指點紙2下 或 左下角按鈕 = 切橡皮擦 / 密集塗黑 = 擦字）';
+        hwBadge.textContent = state.scrollMode === 'vertical'
+          ? '📜 直式連續書寫中（寫到末頁底部自動加頁 / 點橡皮擦▾可調手勢設定）'
+          : '📖 單頁書寫中（點右上「直式連續」可改為上下連續捲動）';
       } else if (e.pointerType === 'touch') {
         hwBadge.textContent = state.fingerAlwaysPan
-          ? '🖐️ 手指觸控：單指滑動 / 雙指縮放 / 單指點2下=切橡皮擦'
+          ? '🖐️ 手指觸控：單指上下滑動跨頁 / 雙指縮放'
           : '👆 手指觸控：目前允許手指寫字（雙指可縮放）';
       }
 
@@ -2455,7 +2865,7 @@
         return;
       }
 
-      const pt = getCanvasCoords(e);
+      const pt = getCanvasCoords(e, true);
       state.pointerDownPos = pt;
       state.pointerDownTime = now;
 
@@ -2495,10 +2905,8 @@
     function handlePointerMove(e) {
       if (e.pointerType === 'pen') {
         state.lastPenActivityTime = Date.now();
-        // WebKit Swallow Recovery: if iPadOS Safari swallowed pointerdown on a rapid short stroke (like the bottom stroke of "日"),
-        // automatically start the stroke on the first pointermove that has pressure > 0 or buttons > 0!
         if (!state.isDrawing && !state.isDraggingLasso && (e.pressure > 0.01 || e.buttons > 0)) {
-          const pt = getCanvasCoords(e);
+          const pt = getCanvasCoords(e, true);
           state.pointerDownPos = pt;
           state.pointerDownTime = Date.now();
           startDrawingOrToolAction(e, pt);
@@ -2507,7 +2915,6 @@
       }
 
       if (e.pointerType === 'touch') {
-        // Ignore palm touch moves while Apple Pencil is active or within 420ms of Pencil activity
         if ((state.isDrawing && state.activeDrawingPointerType === 'pen') || (Date.now() - state.lastPenActivityTime < 420)) {
           return;
         }
@@ -2538,7 +2945,7 @@
         }
       }
 
-      const pt = getCanvasCoords(e);
+      const pt = getCanvasCoords(e, false);
 
       if (state.isDraggingLasso && state.lassoDragStart) {
         const dx = pt.x - state.lassoDragStart.x;
@@ -2567,8 +2974,12 @@
 
       if (state.currentTool === 'lasso') {
         state.lassoPoints.push(pt);
-        overlayCtx.clearRect(0, 0, PAPER_BASE_WIDTH, PAPER_BASE_HEIGHT);
+        const totalH = state.totalLogicalHeight || PAPER_BASE_HEIGHT;
+        overlayCtx.clearRect(0, 0, PAPER_BASE_WIDTH, totalH);
+        const note = getActiveNote();
+        const slot = getActivePageSlot(note);
         overlayCtx.save();
+        if (slot) overlayCtx.translate(0, slot.yStart);
         overlayCtx.strokeStyle = '#2563EB';
         overlayCtx.fillStyle = 'rgba(37, 99, 235, 0.08)';
         overlayCtx.lineWidth = 1.8;
@@ -2586,7 +2997,7 @@
         const events = e.getCoalescedEvents ? e.getCoalescedEvents() : [e];
         const pts = state.currentStroke.points;
         events.forEach(ev => {
-          const rawPt = getCanvasCoords(ev);
+          const rawPt = getCanvasCoords(ev, false);
           if (pts.length === 0) {
             pts.push(rawPt);
             return;
@@ -2594,7 +3005,6 @@
           const prev = pts[pts.length - 1];
           const dist = Math.hypot(rawPt.x - prev.x, rawPt.y - prev.y);
           if (dist >= 0.35) {
-            // Notability Streamline stabilization filter (adaptive to pen speed)
             const alpha = Math.min(0.86, Math.max(0.48, dist / 12));
             pts.push({
               x: prev.x + (rawPt.x - prev.x) * alpha,
@@ -2603,8 +3013,7 @@
             });
           }
         });
-        overlayCtx.clearRect(0, 0, PAPER_BASE_WIDTH, PAPER_BASE_HEIGHT);
-        drawSingleStroke(overlayCtx, state.currentStroke);
+        drawLiveOverlayStroke();
       }
     }
 
@@ -2620,10 +3029,9 @@
         const wasSingleTouch = state.activePointers.size === 1;
         state.activePointers.delete(e.pointerId);
 
-        // Ignore palm touch-up during or right after Apple Pencil writing
         const isPalmNearPen = (state.isDrawing && state.activeDrawingPointerType === 'pen') || (Date.now() - state.lastPenActivityTime < 420);
 
-        if (!isPalmNearPen && wasSingleTouch && state.fingerAlwaysPan) {
+        if (!isPalmNearPen && wasSingleTouch && state.fingerAlwaysPan && state.fingerDoubleTapEraser) {
           const now = Date.now();
           const touchDuration = now - state.touchDownTime;
           const touchMoveDist = Math.hypot(e.clientX - state.touchDownPos.x, e.clientY - state.touchDownPos.y);
@@ -2648,8 +3056,6 @@
           state.panLastCenter = { x: remaining.clientX, y: remaining.clientY };
         }
 
-        // CRITICAL FIX: If fingerAlwaysPan is active OR Apple Pencil is currently drawing,
-        // a touch/palm pointerup/pointercancel must NEVER fall through and terminate the active Pencil stroke!
         if (state.fingerAlwaysPan || state.activeDrawingPointerType === 'pen') {
           return;
         }
@@ -2657,14 +3063,13 @@
 
       if (e.pointerType === 'pen') {
         state.lastPenActivityTime = Date.now();
-        // Shield against iPadOS Scribble premature pointercancel while the Apple Pencil is still physically on the glass!
         if (e.type === 'pointercancel' && state.stylusTouchActive) {
           return;
         }
       }
 
       if (e.pointerType === 'pen' || e.pointerType === 'mouse') {
-        const pt = getCanvasCoords(e);
+        const pt = getCanvasCoords(e, false);
         const pressDuration = Date.now() - state.pointerDownTime;
         const moveDist = Math.hypot(pt.x - state.pointerDownPos.x, pt.y - state.pointerDownPos.y);
         if (pressDuration < 340 && moveDist < 38) {
@@ -2684,9 +3089,8 @@
 
       if (!state.isDrawing) return;
 
-      // Append final pen-up coordinate so ultra-fast short strokes (like the bottom stroke of "日") never lose their tail!
       if (state.currentStroke && (e.pointerType === 'pen' || e.pointerType === 'mouse')) {
-        const endPt = getCanvasCoords(e);
+        const endPt = getCanvasCoords(e, false);
         const pts = state.currentStroke.points;
         if (pts.length > 0) {
           const last = pts[pts.length - 1];
@@ -2699,7 +3103,7 @@
       state.isDrawing = false;
       state.activeDrawingPointerId = null;
       state.activeDrawingPointerType = null;
-      overlayCtx.clearRect(0, 0, PAPER_BASE_WIDTH, PAPER_BASE_HEIGHT);
+      overlayCtx.clearRect(0, 0, PAPER_BASE_WIDTH, state.totalLogicalHeight || PAPER_BASE_HEIGHT);
 
       const note = getActiveNote();
       const page = note.pages[state.currentPageIndex];
@@ -2726,7 +3130,6 @@
       }
 
       if (state.currentStroke && state.currentStroke.points.length > 0) {
-        // Check if this stroke is a GoodNotes-style back-and-forth Scratch-to-Erase gesture!
         if (detectAndApplyScratchToErase(state.currentStroke, page)) {
           state.currentStroke = null;
           commitActiveNoteChange();
@@ -2734,11 +3137,30 @@
           return;
         }
 
-        page.strokes[state.currentStroke.id] = state.currentStroke;
-        state.lastPencilStrokeId = state.currentStroke.id;
-        state.undoStack.push({ type: 'add_stroke', id: state.currentStroke.id });
+        const committedStroke = state.currentStroke;
+        page.strokes[committedStroke.id] = committedStroke;
+        state.lastPencilStrokeId = committedStroke.id;
+        state.undoStack.push({ type: 'add_stroke', id: committedStroke.id, pageIndex: state.currentPageIndex });
         state.redoStack = [];
         state.currentStroke = null;
+
+        // Notability Auto-Page-Extend in Vertical Continuous Mode:
+        // If user writes near the bottom 95px of the last page, automatically append a new blank page below!
+        if (state.scrollMode === 'vertical' && state.currentPageIndex === note.pages.length - 1) {
+          const curPageH = page.pageHeight || PAPER_BASE_HEIGHT;
+          const wroteNearBottom = committedStroke.points.some(p => p.y >= curPageH - 95);
+          if (wroteNearBottom) {
+            note.pages.push({
+              pageNumber: note.pages.length + 1,
+              pageHeight: curPageH,
+              strokes: {},
+              texts: {},
+              bgImage: null
+            });
+            showPencilHud('📄', `已自動於下方接續新增第 ${note.pages.length} 頁`);
+          }
+        }
+
         commitActiveNoteChange();
         renderActivePage();
       }
@@ -2750,15 +3172,16 @@
     function eraseStrokesNearPoint(x, y) {
       const note = getActiveNote();
       const page = note.pages[state.currentPageIndex];
+      const rad = state.eraserRadius || 18;
       let erasedAny = false;
       Object.values(page.strokes).forEach(s => {
         if (s.deleted || !s.points || s.points.length === 0) return;
         let hit = false;
         if (s.points.length === 1) {
-          hit = Math.hypot(s.points[0].x - x, s.points[0].y - y) <= 18;
+          hit = Math.hypot(s.points[0].x - x, s.points[0].y - y) <= rad;
         } else {
           for (let i = 1; i < s.points.length; i++) {
-            if (pointToSegmentDist(x, y, s.points[i - 1].x, s.points[i - 1].y, s.points[i].x, s.points[i].y) <= 18) {
+            if (pointToSegmentDist(x, y, s.points[i - 1].x, s.points[i - 1].y, s.points[i].x, s.points[i].y) <= rad) {
               hit = true;
               break;
             }
@@ -2767,7 +3190,7 @@
         if (hit) {
           s.deleted = true;
           s.updatedAt = Date.now();
-          state.undoStack.push({ type: 'erase_stroke', id: s.id });
+          state.undoStack.push({ type: 'erase_stroke', id: s.id, pageIndex: state.currentPageIndex });
           erasedAny = true;
         }
       });
@@ -2778,14 +3201,75 @@
     }
 
     /***********************************************************************
-     * SIDEBAR CATALOG & UI WIRING
+     * NOTABILITY SUBJECTS (CATEGORIES) & SIDEBAR CATALOG
      ***********************************************************************/
+    function renderSubjectsBar() {
+      const subjContainer = document.getElementById('subjects-list');
+      const headerSelect = document.getElementById('current-note-subject');
+      if (!subjContainer) return;
+      subjContainer.innerHTML = '';
+
+      const allIds = Array.from(new Set([...Object.keys(cloudDriveDB), ...Object.keys(ipadLocalDB)]));
+      const counts = { all: allIds.length };
+      subjectsDB.forEach(s => { counts[s.id] = 0; });
+      allIds.forEach(nid => {
+        const meta = ipadLocalDB[nid] || cloudDriveDB[nid];
+        if (!meta) return;
+        const sid = meta.subjectId || 'subj_uncat';
+        counts[sid] = (counts[sid] || 0) + 1;
+      });
+
+      const makeSubjBtn = (id, label, count) => {
+        const active = state.selectedSubjectFilter === id;
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = `px-2 py-1 rounded-lg text-[11px] font-medium flex items-center gap-1 transition-all border ${
+          active
+            ? 'bg-[var(--primary)] text-[var(--primary-foreground)] border-[var(--primary)] shadow-xs'
+            : 'bg-[var(--card)] text-[var(--foreground)] border-[var(--border)] hover:bg-[var(--secondary)]'
+        }`;
+        btn.innerHTML = `<span class="truncate max-w-[110px]">${label}</span><span class="opacity-75 font-mono text-[10px]">(${count})</span>`;
+        btn.addEventListener('click', () => {
+          state.selectedSubjectFilter = id;
+          renderSubjectsBar();
+          renderSidebarCatalog();
+        });
+        return btn;
+      };
+
+      subjContainer.appendChild(makeSubjBtn('all', '📚 全部筆記', counts.all || 0));
+      subjectsDB.forEach(s => {
+        subjContainer.appendChild(makeSubjBtn(s.id, s.name, counts[s.id] || 0));
+      });
+
+      if (headerSelect) {
+        const activeNote = getActiveNote();
+        headerSelect.innerHTML = subjectsDB.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
+        if (activeNote) {
+          headerSelect.value = activeNote.subjectId || 'subj_uncat';
+        }
+      }
+    }
+
     function renderSidebarCatalog() {
+      renderSubjectsBar();
       const listEl = document.getElementById('notes-list');
       listEl.innerHTML = '';
       const allIds = Array.from(new Set([...Object.keys(cloudDriveDB), ...Object.keys(ipadLocalDB)]));
 
-      allIds.forEach(noteId => {
+      const filteredIds = allIds.filter(noteId => {
+        const meta = ipadLocalDB[noteId] || cloudDriveDB[noteId];
+        if (!meta) return false;
+        if (state.selectedSubjectFilter === 'all') return true;
+        return (meta.subjectId || 'subj_uncat') === state.selectedSubjectFilter;
+      });
+
+      if (filteredIds.length === 0) {
+        listEl.innerHTML = `<div class="p-4 text-center text-xs text-[var(--muted-foreground)]">此分類項目尚無筆記，可點右上「+ 新筆記」或從其他筆記卡片切換分類歸檔。</div>`;
+        return;
+      }
+
+      filteredIds.forEach(noteId => {
         const localCopy = ipadLocalDB[noteId];
         const cloudCopy = cloudDriveDB[noteId];
         const meta = localCopy || cloudCopy;
@@ -2794,31 +3278,42 @@
         const isCurrent = noteId === state.currentNoteId;
         const isOffloadedOnIpad = Boolean(localCopy && localCopy.offloaded);
         const daysAgo = Math.floor((Date.now() - (meta.lastOpenedAt || meta.updatedAt)) / (1000 * 60 * 60 * 24));
+        const subjObj = subjectsDB.find(s => s.id === (meta.subjectId || 'subj_uncat')) || subjectsDB[subjectsDB.length - 1];
 
         let storageTag = '';
         if (state.deviceMode === 'ipad') {
           storageTag = isOffloadedOnIpad
-            ? `<span class="px-1.5 py-0.5 rounded text-[10px] bg-amber-500/15 text-amber-400 border border-amber-500/30">☁️ 已卸載至 Google 雲端</span>`
-            : `<span class="px-1.5 py-0.5 rounded text-[10px] bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">💾 iPad 本機原檔</span>`;
+            ? `<span class="px-1.5 py-0.5 rounded text-[10px] bg-amber-500/15 text-amber-400 border border-amber-500/30">☁️ 雲端封存</span>`
+            : `<span class="px-1.5 py-0.5 rounded text-[10px] bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">💾 本機原檔</span>`;
         } else {
           const inTemp = Boolean(state.iphoneTempCache[noteId]);
           storageTag = inTemp
-            ? `<span class="px-1.5 py-0.5 rounded text-[10px] bg-blue-500/15 text-blue-400 border border-blue-500/30">📲 手機已下載暫存</span>`
-            : `<span class="px-1.5 py-0.5 rounded text-[10px] bg-[var(--secondary)] text-[var(--muted-foreground)]">☁️ 點擊從 Google 下載</span>`;
+            ? `<span class="px-1.5 py-0.5 rounded text-[10px] bg-blue-500/15 text-blue-400 border border-blue-500/30">📲 暫存</span>`
+            : `<span class="px-1.5 py-0.5 rounded text-[10px] bg-[var(--secondary)] text-[var(--muted-foreground)]">☁️ 雲端</span>`;
         }
 
-        const card = document.createElement('button');
-        card.className = `w-full text-left p-2.5 rounded-xl border transition-all ${
+        const card = document.createElement('div');
+        card.className = `w-full text-left p-2.5 rounded-xl border transition-all cursor-pointer ${
           isCurrent ? 'bg-[var(--secondary)] border-[var(--primary)] shadow-xs' : 'bg-transparent border-transparent hover:bg-[var(--secondary)]/60'
         }`;
         card.innerHTML = `
-          <div class="font-semibold text-xs text-[var(--foreground)] truncate">${meta.title}</div>
+          <div class="flex items-center justify-between gap-1">
+            <div class="font-semibold text-xs text-[var(--foreground)] truncate flex-1">${meta.title}</div>
+            <button type="button" data-del-note="${noteId}" class="px-1.5 py-0.5 rounded hover:bg-red-500/20 text-[var(--muted-foreground)] hover:text-red-400 text-[10px]" title="刪除此筆記">🗑️</button>
+          </div>
           <div class="flex items-center justify-between mt-1.5 gap-1">
-            ${storageTag}
-            <span class="text-[10px] text-[var(--muted-foreground)]">${daysAgo <= 0 ? '今天' : `${daysAgo}天前`}</span>
+            <div class="flex items-center gap-1 min-w-0">
+              ${storageTag}
+              <select data-move-note="${noteId}" class="bg-[var(--card)] text-[10px] text-[var(--muted-foreground)] border border-[var(--border)] rounded px-1 py-0.5 max-w-[105px] truncate" title="將筆記歸檔至分類項目">
+                ${subjectsDB.map(s => `<option value="${s.id}" ${(meta.subjectId || 'subj_uncat') === s.id ? 'selected' : ''}>${s.name}</option>`).join('')}
+              </select>
+            </div>
+            <span class="text-[10px] text-[var(--muted-foreground)] shrink-0">${daysAgo <= 0 ? '今天' : `${daysAgo}天前`}</span>
           </div>
         `;
-        card.addEventListener('click', () => {
+
+        card.addEventListener('click', (ev) => {
+          if (ev.target.closest('select') || ev.target.closest('[data-del-note]')) return;
           state.currentNoteId = noteId;
           state.currentPageIndex = 0;
           state.selectedStrokeIds.clear();
@@ -2826,14 +3321,51 @@
           renderSidebarCatalog();
           if (window.innerWidth < 768) toggleSidebar(false);
         });
+
+        const moveSelect = card.querySelector(`[data-move-note="${noteId}"]`);
+        if (moveSelect) {
+          moveSelect.addEventListener('change', (ev) => {
+            ev.stopPropagation();
+            const targetSubj = ev.target.value;
+            if (cloudDriveDB[noteId]) cloudDriveDB[noteId].subjectId = targetSubj;
+            if (ipadLocalDB[noteId]) ipadLocalDB[noteId].subjectId = targetSubj;
+            saveDatabases();
+            renderSidebarCatalog();
+            const sName = subjectsDB.find(s => s.id === targetSubj)?.name || '分類';
+            showToast('📁', '已歸檔筆記', `「${meta.title}」已移至「${sName}」`);
+          });
+        }
+
+        const delBtn = card.querySelector(`[data-del-note="${noteId}"]`);
+        if (delBtn) {
+          delBtn.addEventListener('click', (ev) => {
+            ev.stopPropagation();
+            if (!confirm(`確定要刪除筆記「${meta.title}」嗎？`)) return;
+            delete cloudDriveDB[noteId];
+            delete ipadLocalDB[noteId];
+            delete state.iphoneTempCache[noteId];
+            const remainingIds = Object.keys(cloudDriveDB);
+            if (state.currentNoteId === noteId) {
+              state.currentNoteId = remainingIds[0] || null;
+              state.currentPageIndex = 0;
+            }
+            saveDatabases();
+            renderSidebarCatalog();
+            renderActivePage();
+          });
+        }
+
         listEl.appendChild(card);
       });
     }
 
     function renderPagePills(note) {
       const container = document.getElementById('page-pills');
+      if (!container || !note) return;
       container.innerHTML = '';
       document.getElementById('page-indicator').textContent = `第 ${state.currentPageIndex + 1} / ${note.pages.length} 頁`;
+      const { pageSlots } = getPageLayoutMetrics(note);
+
       note.pages.forEach((p, idx) => {
         const btn = document.createElement('button');
         btn.className = `px-2.5 py-1 rounded-md text-xs font-mono border ${
@@ -2845,6 +3377,12 @@
         btn.addEventListener('click', () => {
           state.currentPageIndex = idx;
           renderActivePage();
+          if (state.scrollMode === 'vertical') {
+            const slot = pageSlots.find(s => s.pageIndex === idx);
+            if (slot) {
+              viewportEl.scrollTo({ top: Math.round(slot.yStart * state.zoomScale), behavior: 'smooth' });
+            }
+          }
         });
         container.appendChild(btn);
       });
@@ -2853,12 +3391,16 @@
     function updateStatusBadges() {
       const note = getActiveNote();
       if (!note) return;
-      const page = note.pages[state.currentPageIndex] || note.pages[0];
-      const allStrokes = Object.values(page.strokes || {});
-      const activeStrokes = allStrokes.filter(s => !s.deleted).length;
-      const tombstones = allStrokes.filter(s => s.deleted).length;
+      let activeStrokes = 0;
+      let tombstones = 0;
+      note.pages.forEach(pg => {
+        Object.values(pg.strokes || {}).forEach(s => {
+          if (s.deleted) tombstones++;
+          else activeStrokes++;
+        });
+      });
 
-      document.getElementById('stroke-stats-badge').textContent = `筆劃: ${activeStrokes} | 墓碑: ${tombstones}`;
+      document.getElementById('stroke-stats-badge').textContent = `總筆劃: ${activeStrokes} | 頁數: ${note.pages.length}`;
 
       const badge = document.getElementById('note-storage-badge');
       const cloudText = state.gdriveAccessToken ? '☁️ Google Drive 已連線' : '☁️ 模擬雲端';
@@ -2876,13 +3418,13 @@
       if (!localNote) return;
 
       const remoteClone = JSON.parse(JSON.stringify(cloudDriveDB[localNote.id] || localNote));
-      const page = remoteClone.pages[state.currentPageIndex];
+      const page = remoteClone.pages[state.currentPageIndex] || remoteClone.pages[0];
       const stamp = Date.now();
       const randY = 680 + Math.floor(Math.random() * 160);
 
       const remoteStrokeId = `stk_iphone_remote_${stamp}`;
       page.strokes[remoteStrokeId] = {
-        id: remoteStrokeId, tool: 'pen', color: '#DC2626', size: 3.8, device: 'iPhone',
+        id: remoteStrokeId, tool: 'pen', color: '#DC2626', size: 3.8, dash: 'solid', device: 'iPhone',
         createdAt: stamp, updatedAt: stamp, deleted: false,
         points: [{ x: 235, y: randY, p: 0.7 }, { x: 310, y: randY - 8, p: 0.8 }, { x: 430, y: randY + 4, p: 0.75 }, { x: 560, y: randY - 3, p: 0.7 }]
       };
@@ -2913,8 +3455,15 @@
     ['input-notability-files', 'input-notability-folder', 'sidebar-notability-files', 'sidebar-notability-folder'].forEach(id => {
       const el = document.getElementById(id);
       if (el) {
-        el.addEventListener('change', (e) => handleNotabilityFilesUpload(e.target.files));
+        el.addEventListener('change', (e) => {
+          handleNotabilityFilesUpload(e.target.files);
+          e.target.value = '';
+        });
       }
+    });
+
+    document.getElementById('btn-sidebar-cloud-import')?.addEventListener('click', () => {
+      document.getElementById('cloud-modal').classList.remove('hidden');
     });
 
     window.addEventListener('dragover', (e) => e.preventDefault());
@@ -2934,36 +3483,127 @@
     document.getElementById('btn-zoom-out').addEventListener('click', () => setPaperZoom(state.zoomScale - 0.15));
     document.getElementById('btn-zoom-fit').addEventListener('click', () => fitPaperToViewport());
 
-    document.getElementById('btn-scratch-mode')?.addEventListener('click', () => {
-      state.scratchToEraseEnabled = !state.scratchToEraseEnabled;
-      const btn = document.getElementById('btn-scratch-mode');
-      const label = document.getElementById('scratch-mode-label');
-      if (state.scratchToEraseEnabled) {
-        label.textContent = '塗抹擦字: 開';
-        btn.className = 'px-2 py-1 rounded-lg text-xs font-medium bg-emerald-600/20 text-emerald-400 border border-emerald-500/40 flex items-center gap-1 hover:opacity-90';
-        showToast('✨', '已開啟「塗抹擦字」', '在錯字正上方原地來回塗滿 4 趟即可擦除（已啟用左右部首與豎畫防誤刪保護）。');
+    // Scroll Mode Switcher: Vertical Continuous vs Single Page Flip
+    document.getElementById('btn-scroll-mode')?.addEventListener('click', () => {
+      state.scrollMode = state.scrollMode === 'vertical' ? 'single' : 'vertical';
+      const btn = document.getElementById('btn-scroll-mode');
+      const label = document.getElementById('scroll-mode-label');
+      if (state.scrollMode === 'vertical') {
+        btn.className = 'px-2 py-1 rounded-lg text-xs font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 flex items-center gap-1 hover:opacity-90';
+        btn.querySelector('span:first-child').textContent = '📜';
+        label.textContent = '直式連續';
+        showToast('📜', '已切換為「直式連續書寫模式」', '所有頁面由上往下連續排列，寫到最後一頁底部會自動加頁！');
       } else {
-        label.textContent = '塗抹擦字: 關';
-        btn.className = 'px-2 py-1 rounded-lg text-xs font-medium bg-[var(--secondary)] text-[var(--muted-foreground)] border border-[var(--border)] flex items-center gap-1 hover:opacity-90';
-        showToast('🔒', '已關閉「塗抹擦字」', '現在無論如何連筆或重疊寫字都 100% 不會觸發塗抹刪除！可使用左下角按鈕或單指點兩下切橡皮擦。');
+        btn.className = 'px-2 py-1 rounded-lg text-xs font-medium bg-[var(--secondary)] text-[var(--foreground)] border border-[var(--border)] flex items-center gap-1 hover:opacity-90';
+        btn.querySelector('span:first-child').textContent = '📖';
+        label.textContent = '單頁翻頁';
+        showToast('📖', '已切換為「單頁翻頁模式」', '一次專注顯示單一頁面，可由左下角頁碼切換。');
       }
+      renderActivePage();
     });
 
+    // New Subject (Category) Creation
+    document.getElementById('btn-new-subject')?.addEventListener('click', () => {
+      const name = prompt('請輸入新分類項目名稱（例如：📘 線性代數、🧪 物理實驗）：', '');
+      if (!name || !name.trim()) return;
+      const newSubj = {
+        id: `subj_${Date.now()}`,
+        name: name.trim().startsWith('📁') || [...name.trim()][0].codePointAt(0) > 255 ? name.trim() : `📁 ${name.trim()}`,
+        color: '#3B82F6'
+      };
+      subjectsDB.push(newSubj);
+      saveSubjectsDB();
+      state.selectedSubjectFilter = newSubj.id;
+      renderSidebarCatalog();
+      showToast('📁', `已建立新分類項目「${newSubj.name}」`, '可將任何筆記歸檔至此分類項目中！');
+    });
+
+    document.getElementById('current-note-subject')?.addEventListener('change', (e) => {
+      const note = getActiveNote();
+      if (!note) return;
+      note.subjectId = e.target.value;
+      commitActiveNoteChange();
+      const sName = subjectsDB.find(s => s.id === e.target.value)?.name || '分類';
+      showToast('📁', '已更新筆記分類', `「${note.title}」已歸檔至「${sName}」`);
+    });
+
+    // Core Tools & Eraser Options Popover Wiring
     document.querySelectorAll('[data-tool]').forEach(btn => {
-      btn.addEventListener('click', () => selectTool(btn.dataset.tool, false));
+      btn.addEventListener('click', (e) => {
+        const tool = btn.dataset.tool;
+        const popover = document.getElementById('eraser-popover');
+        if (tool === 'eraser') {
+          if (state.currentTool === 'eraser' && popover) {
+            popover.classList.toggle('hidden');
+          } else {
+            selectTool('eraser', false);
+            popover?.classList.remove('hidden');
+          }
+        } else {
+          popover?.classList.add('hidden');
+          selectTool(tool, false);
+        }
+      });
+    });
+
+    document.getElementById('btn-close-eraser-popover')?.addEventListener('click', () => {
+      document.getElementById('eraser-popover')?.classList.add('hidden');
+    });
+
+    document.getElementById('chk-finger-doubletap-eraser')?.addEventListener('change', (e) => {
+      state.fingerDoubleTapEraser = e.target.checked;
+      showToast(state.fingerDoubleTapEraser ? '🖐️' : '🔒', `單指點兩下切橡皮擦：${state.fingerDoubleTapEraser ? '已開啟' : '已關閉'}`, '');
+    });
+
+    document.getElementById('chk-scratch-to-erase')?.addEventListener('change', (e) => {
+      state.scratchToEraseEnabled = e.target.checked;
+      showToast(state.scratchToEraseEnabled ? '✨' : '🔒', `來回塗抹自動消除：${state.scratchToEraseEnabled ? '已開啟' : '已關閉'}`, '');
+    });
+
+    document.getElementById('chk-show-floating-fab')?.addEventListener('change', (e) => {
+      state.showFloatingEraserFab = e.target.checked;
+      const fab = document.getElementById('floating-eraser-fab');
+      if (fab) fab.style.display = state.showFloatingEraserFab ? 'flex' : 'none';
+    });
+
+    document.querySelectorAll('[data-eraser-radius]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        state.eraserRadius = parseFloat(btn.dataset.eraserRadius);
+        document.querySelectorAll('[data-eraser-radius]').forEach(b => {
+          b.className = 'eraser-rad-btn py-1 rounded-lg border border-[var(--border)] bg-[var(--secondary)]/60 text-[11px] font-medium';
+        });
+        btn.className = 'eraser-rad-btn py-1 rounded-lg border border-[var(--primary)] bg-[var(--primary)]/20 text-[var(--foreground)] text-[11px] font-bold';
+      });
+    });
+
+    document.getElementById('btn-clear-page-strokes')?.addEventListener('click', () => {
+      const note = getActiveNote();
+      const page = note?.pages[state.currentPageIndex];
+      if (!page) return;
+      const clearedIds = [];
+      Object.values(page.strokes || {}).forEach(s => {
+        if (!s.deleted) {
+          s.deleted = true;
+          s.updatedAt = Date.now();
+          clearedIds.push(s.id);
+        }
+      });
+      if (clearedIds.length > 0) {
+        state.undoStack.push({ type: 'scratch_erase', ids: clearedIds, pageIndex: state.currentPageIndex });
+        commitActiveNoteChange();
+        renderActivePage();
+        showToast('🧹', `已清除第 ${state.currentPageIndex + 1} 頁的 ${clearedIds.length} 筆手寫筆跡`, '若需還原可點擊左上角復原 (Undo)。');
+      }
+      document.getElementById('eraser-popover')?.classList.add('hidden');
     });
 
     // Floating Quick Eraser / Pen Switcher Pill:
-    // - Quick Tap (<260ms): Toggle & Lock Eraser <-> Pen
-    // - Press & Hold (>=260ms): Spring-Loaded Eraser (erases while held, automatically returns to Pen when released!)
-    // - Drag (>10px): Move button anywhere on screen
     (() => {
       const fab = document.getElementById('floating-eraser-fab');
       if (!fab) return;
       let isDraggingFab = false;
       let fabMoved = false;
       let startX = 0, startY = 0, origLeft = 0, origTop = 0;
-      let pressStartTime = 0;
       let toolBeforeHold = null;
       let holdSpringActive = false;
       let holdTimer = null;
@@ -2974,7 +3614,6 @@
         fab.setPointerCapture(e.pointerId);
         isDraggingFab = true;
         fabMoved = false;
-        pressStartTime = Date.now();
         toolBeforeHold = state.currentTool;
         holdSpringActive = false;
         const rect = fab.getBoundingClientRect();
@@ -3029,7 +3668,6 @@
       fab.addEventListener('pointercancel', endFab);
     })();
 
-    // Support URL hash #toggle-eraser for Apple Pencil Pro Squeeze -> iOS Shortcut integration
     window.addEventListener('hashchange', () => {
       if (location.hash === '#toggle-eraser' || location.hash === '#eraser') {
         togglePencilEraserDoubleTap('⚡ Apple Pencil 捷徑');
@@ -3042,11 +3680,11 @@
       const btn = document.getElementById('btn-finger-mode');
       const label = document.getElementById('finger-mode-label');
       if (state.fingerAlwaysPan) {
-        label.textContent = '手指=滑動 / Pencil=寫字';
+        label.textContent = '手指=滑動';
         btn.className = 'px-2 py-1 rounded-lg text-xs font-medium bg-[var(--primary)] text-[var(--primary-foreground)] flex items-center gap-1 hover:opacity-90';
         showToast('🖐️', '已啟用「手指自動滑動 / Apple Pencil 寫字」', '用手指碰螢幕只會滑動與縮放；拿 Apple Pencil 碰螢幕會直接寫字！');
       } else {
-        label.textContent = '手指也可寫字 (雙指縮放)';
+        label.textContent = '手指=寫字';
         btn.className = 'px-2 py-1 rounded-lg text-xs font-medium border border-[var(--border)] bg-[var(--secondary)] text-[var(--foreground)] flex items-center gap-1 hover:opacity-90';
         showToast('👆', '已允許單指寫字', '適合沒帶 Apple Pencil 時用手指臨時補寫筆記（雙指依然可縮放）。');
       }
@@ -3060,11 +3698,33 @@
       });
     });
 
+    const sizeSlider = document.getElementById('stroke-size-slider');
+    const sizeLabel = document.getElementById('stroke-size-label');
+
     document.querySelectorAll('[data-size]').forEach(btn => {
       btn.addEventListener('click', () => {
         state.currentSize = parseFloat(btn.dataset.size);
         document.querySelectorAll('[data-size]').forEach(b => b.classList.remove('bg-[var(--card)]', 'shadow-xs'));
         btn.classList.add('bg-[var(--card)]', 'shadow-xs');
+        if (sizeSlider) sizeSlider.value = String(state.currentSize);
+        if (sizeLabel) sizeLabel.textContent = state.currentSize.toFixed(1);
+      });
+    });
+
+    sizeSlider?.addEventListener('input', (e) => {
+      state.currentSize = parseFloat(e.target.value);
+      if (sizeLabel) sizeLabel.textContent = state.currentSize.toFixed(1);
+      document.querySelectorAll('[data-size]').forEach(b => b.classList.remove('bg-[var(--card)]', 'shadow-xs'));
+    });
+
+    // Line Dash Style Selector (Solid / Dashed / Dotted)
+    document.querySelectorAll('[data-dash]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        state.currentDash = btn.dataset.dash;
+        document.querySelectorAll('[data-dash]').forEach(b => {
+          b.className = 'dash-btn px-1.5 py-1 rounded hover:bg-[var(--card)] text-[11px] font-mono text-[var(--muted-foreground)]';
+        });
+        btn.className = 'dash-btn px-1.5 py-1 rounded bg-[var(--card)] shadow-xs text-[11px] font-mono text-[var(--foreground)] font-bold';
       });
     });
 
@@ -3083,18 +3743,35 @@
 
     document.getElementById('btn-add-page').addEventListener('click', () => {
       const note = getActiveNote();
-      note.pages.push({ pageNumber: note.pages.length + 1, strokes: {}, texts: {} });
+      const refH = note.pages[note.pages.length - 1]?.pageHeight || PAPER_BASE_HEIGHT;
+      note.pages.push({ pageNumber: note.pages.length + 1, pageHeight: refH, strokes: {}, texts: {} });
       state.currentPageIndex = note.pages.length - 1;
       commitActiveNoteChange();
       renderActivePage();
+      if (state.scrollMode === 'vertical') {
+        const { pageSlots } = getPageLayoutMetrics(note);
+        const lastSlot = pageSlots[pageSlots.length - 1];
+        if (lastSlot) {
+          viewportEl.scrollTo({ top: Math.round(lastSlot.yStart * state.zoomScale), behavior: 'smooth' });
+        }
+      }
     });
 
     document.getElementById('btn-new-note').addEventListener('click', () => {
       const id = `note_${Date.now()}`;
+      const targetSubject = (state.selectedSubjectFilter && state.selectedSubjectFilter !== 'all')
+        ? state.selectedSubjectFilter
+        : 'subj_math';
       const newNote = {
-        id, title: `手寫筆記 ${Object.keys(cloudDriveDB).length + 1}`, template: 'grid',
-        createdAt: Date.now(), updatedAt: Date.now(), lastOpenedAt: Date.now(), offloaded: false,
-        pages: [{ pageNumber: 1, strokes: {}, texts: {} }]
+        id,
+        title: `手寫筆記 ${Object.keys(cloudDriveDB).length + 1}`,
+        subjectId: targetSubject,
+        template: 'grid',
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+        lastOpenedAt: Date.now(),
+        offloaded: false,
+        pages: [{ pageNumber: 1, pageHeight: PAPER_BASE_HEIGHT, strokes: {}, texts: {} }]
       };
       cloudDriveDB[id] = newNote;
       ipadLocalDB[id] = JSON.parse(JSON.stringify(newNote));
@@ -3110,7 +3787,10 @@
       const last = state.undoStack.pop();
       if (!last) return;
       const note = getActiveNote();
-      const page = note.pages[state.currentPageIndex];
+      if (!note) return;
+      const targetIdx = typeof last.pageIndex === 'number' ? last.pageIndex : state.currentPageIndex;
+      const page = note.pages[targetIdx] || note.pages[state.currentPageIndex];
+      if (!page) return;
       if (last.type === 'add_stroke' && page.strokes[last.id]) {
         page.strokes[last.id].deleted = true;
         page.strokes[last.id].updatedAt = Date.now();
@@ -3139,7 +3819,10 @@
       const item = state.redoStack.pop();
       if (!item) return;
       const note = getActiveNote();
-      const page = note.pages[state.currentPageIndex];
+      if (!note) return;
+      const targetIdx = typeof item.pageIndex === 'number' ? item.pageIndex : state.currentPageIndex;
+      const page = note.pages[targetIdx] || note.pages[state.currentPageIndex];
+      if (!page) return;
       if (item.type === 'add_stroke' && page.strokes[item.id]) {
         page.strokes[item.id].deleted = false;
         state.undoStack.push(item);
