@@ -343,15 +343,18 @@
     <!-- MOBILE BACKDROP OVERLAY -->
     <div id="sidebar-backdrop" class="hidden fixed inset-0 bg-black/50 backdrop-blur-[1px] z-30 md:hidden"></div>
 
-    <!-- COLLAPSIBLE NOTEBOOK & SUBJECTS CATALOG SIDEBAR (Notability Style!) -->
-    <aside id="notebook-sidebar" class="fixed md:static inset-y-0 left-0 w-72 bg-[var(--card)] border-r border-[var(--border)] flex flex-col shrink-0 z-40 shadow-2xl md:shadow-none">
+    <!-- COLLAPSIBLE NOTEBOOK & SUBJECTS CATALOG SIDEBAR (Authentic Notability Divider + Subject Hierarchy!) -->
+    <aside id="notebook-sidebar" class="fixed md:static inset-y-0 left-0 w-76 sm:w-80 bg-[var(--card)] border-r border-[var(--border)] flex flex-col shrink-0 z-40 shadow-2xl md:shadow-none">
       <div class="p-3 border-b border-[var(--border)] flex items-center justify-between">
         <div>
-          <h2 class="text-xs font-bold uppercase tracking-wider text-[var(--muted-foreground)]">Notability 分類與筆記</h2>
-          <p id="device-storage-summary" class="text-[11px] text-[var(--muted-foreground)] mt-0.5">支援分類歸檔 & 直式連續書寫</p>
+          <h2 class="text-xs font-bold uppercase tracking-wider text-[var(--foreground)] flex items-center gap-1.5">
+            <span>🗂️</span>
+            <span>Notability 主題與分隔條</span>
+          </h2>
+          <p id="device-storage-summary" class="text-[10px] text-[var(--muted-foreground)] mt-0.5">分隔條 (Dividers) ▾ ➔ 主題 (Subjects) ➔ 筆記</p>
         </div>
         <div class="flex items-center gap-1">
-          <button id="btn-new-note" class="px-2.5 py-1 rounded-lg text-xs font-semibold bg-[var(--primary)] text-[var(--primary-foreground)] hover:opacity-90">
+          <button id="btn-new-note" class="px-2.5 py-1 rounded-lg text-xs font-semibold bg-[var(--primary)] text-[var(--primary-foreground)] hover:opacity-90 shadow-xs">
             + 新筆記
           </button>
           <button id="btn-close-sidebar-inside" type="button" class="w-7 h-7 flex items-center justify-center rounded-lg bg-[var(--secondary)] hover:bg-[var(--border)] text-[var(--foreground)] font-bold text-xs cursor-pointer" title="收合目錄">
@@ -360,40 +363,75 @@
         </div>
       </div>
 
-      <!-- Notability Subjects (Dividers / Categories) Section -->
-      <div class="p-2.5 border-b border-[var(--border)] bg-[var(--secondary)]/30 space-y-1.5">
-        <div class="flex items-center justify-between">
-          <span class="text-[11px] font-bold text-[var(--muted-foreground)] uppercase tracking-wider">📁 分類項目 (Subjects)</span>
-          <button id="btn-new-subject" type="button" class="px-2 py-0.5 rounded bg-[var(--secondary)] hover:bg-[var(--border)] text-[11px] font-semibold text-[var(--link)] border border-[var(--border)]">
-            + 新增項目
+      <!-- Notability Two-Level Hierarchy: Dividers (分隔條) & Subjects (主題) -->
+      <div class="p-2.5 border-b border-[var(--border)] bg-[var(--secondary)]/25 space-y-1.5">
+        <div class="flex items-center justify-between gap-1">
+          <span class="text-[11px] font-bold text-[var(--muted-foreground)] tracking-wider">📚 分類目錄 (Dividers & Subjects)</span>
+          <div class="flex items-center gap-1">
+            <button id="btn-new-divider" type="button" class="px-1.5 py-0.5 rounded bg-[var(--secondary)] hover:bg-[var(--border)] text-[10px] font-semibold text-[var(--foreground)] border border-[var(--border)]" title="新增 Notability 分隔條 (大分類資料夾)">
+              + 分隔條
+            </button>
+            <button id="btn-new-subject" type="button" class="px-2 py-0.5 rounded bg-blue-500/20 hover:bg-blue-500/30 text-[10px] font-bold text-blue-400 border border-blue-500/30" title="新增 Notability 彩色主題 (Subject)">
+              + 主題
+            </button>
+          </div>
+        </div>
+
+        <!-- Inline Quick Creator for Subject / Divider (Hidden by default) -->
+        <div id="subject-creator-box" class="hidden p-2 rounded-xl bg-[var(--card)] border border-[var(--border)] space-y-2 text-xs shadow-lg">
+          <div class="flex items-center justify-between">
+            <span id="creator-box-title" class="font-bold text-[11px] text-[var(--foreground)]">新增彩色主題 (Subject)</span>
+            <button id="btn-cancel-creator" type="button" class="text-[var(--muted-foreground)] hover:text-[var(--foreground)] px-1">✕</button>
+          </div>
+          <input id="input-new-subj-name" type="text" placeholder="輸入主題名稱 (例：微積分、流體力學)" class="w-full bg-[var(--secondary)] border border-[var(--border)] rounded-lg px-2.5 py-1 text-xs text-[var(--foreground)] focus:outline-none focus:ring-1 focus:ring-[var(--primary)]" />
+          <div id="creator-divider-row" class="flex items-center justify-between gap-2">
+            <span class="text-[10px] text-[var(--muted-foreground)] shrink-0">所屬分隔條：</span>
+            <select id="select-new-subj-divider" class="flex-1 bg-[var(--secondary)] border border-[var(--border)] rounded-lg px-2 py-1 text-[11px] text-[var(--foreground)]"></select>
+          </div>
+          <div id="creator-color-row" class="flex items-center justify-between gap-1 pt-0.5">
+            <span class="text-[10px] text-[var(--muted-foreground)]">代表色：</span>
+            <div class="flex items-center gap-1.5" id="subj-color-picker">
+              <button type="button" data-subj-color="#3B82F6" class="w-4 h-4 rounded-full bg-blue-500 ring-2 ring-white scale-110"></button>
+              <button type="button" data-subj-color="#10B981" class="w-4 h-4 rounded-full bg-emerald-500 opacity-75"></button>
+              <button type="button" data-subj-color="#F59E0B" class="w-4 h-4 rounded-full bg-amber-500 opacity-75"></button>
+              <button type="button" data-subj-color="#EF4444" class="w-4 h-4 rounded-full bg-red-500 opacity-75"></button>
+              <button type="button" data-subj-color="#8B5CF6" class="w-4 h-4 rounded-full bg-purple-500 opacity-75"></button>
+              <button type="button" data-subj-color="#EC4899" class="w-4 h-4 rounded-full bg-pink-500 opacity-75"></button>
+              <button type="button" data-subj-color="#06B6D4" class="w-4 h-4 rounded-full bg-cyan-500 opacity-75"></button>
+            </div>
+          </div>
+          <button id="btn-confirm-creator" type="button" class="w-full py-1 rounded-lg bg-[var(--primary)] text-[var(--primary-foreground)] font-semibold text-xs hover:opacity-90">
+            確認建立
           </button>
         </div>
-        <div id="subjects-list" class="flex flex-wrap gap-1 max-h-28 overflow-y-auto pt-0.5"></div>
+
+        <!-- Notability Vertical Tree of Smart Filters + Dividers ▾ + Colored Subjects -->
+        <div id="subjects-list" class="space-y-1 max-h-56 overflow-y-auto pr-0.5 pt-0.5"></div>
       </div>
 
       <!-- Direct Notability & PDF Import Box inside Sidebar (iPad-friendly!) -->
-      <div class="p-2.5 bg-amber-500/10 border-b border-amber-500/25 space-y-1.5">
-        <div class="text-[11px] font-semibold text-amber-400">📥 匯入 Notability (.note) 或 PDF 講義</div>
+      <div class="p-2 bg-amber-500/10 border-b border-amber-500/25 space-y-1">
         <div class="flex gap-1.5">
-          <label class="flex-1 text-center py-1.5 px-2 rounded-lg bg-amber-500 text-slate-950 font-bold text-[11px] cursor-pointer hover:opacity-90 shadow-xs">
-            📄 選取 .note / PDF / plist
+          <label class="flex-1 text-center py-1 px-2 rounded-lg bg-amber-500 text-slate-950 font-bold text-[11px] cursor-pointer hover:opacity-90 shadow-xs">
+            📥 匯入 .note / PDF / plist
             <input id="sidebar-notability-files" type="file" multiple class="hidden" />
           </label>
-          <button id="btn-sidebar-cloud-import" type="button" class=" py-1.5 px-2.5 rounded-lg bg-[var(--card)] text-[var(--foreground)] border border-[var(--border)] font-medium text-[11px] cursor-pointer hover:bg-[var(--secondary)]" title="透過 Google 雲端硬碟同步整個 Notability 資料夾">
-            ☁️ 雲端載入
+          <button id="btn-sidebar-cloud-import" type="button" class="py-1 px-2 rounded-lg bg-[var(--card)] text-[var(--foreground)] border border-[var(--border)] font-medium text-[11px] cursor-pointer hover:bg-[var(--secondary)]" title="透過 Google 雲端硬碟同步整個 Notability 資料夾">
+            ☁️ 雲端
           </button>
-        </div>
-        <div class="text-[10px] text-[var(--muted-foreground)] leading-snug">
-          💡 <strong>iPad 提示</strong>：若點 <code class="text-[var(--code-foreground)]">.note</code> 變成進入資料夾，請直接在裡面按「<strong>全選 (Session.plist + PDF)</strong>」再按「打開」即可完整匯入！
+          <button id="btn-run-ttl-cleanup" type="button" class="py-1 px-2 rounded-lg bg-amber-500/20 text-amber-400 border border-amber-500/30 hover:bg-amber-500/30 font-medium text-[10px] shrink-0" title="檢查並自動卸載超過 30 天未開的本機筆記">
+            🧹 30天
+          </button>
         </div>
       </div>
 
-      <!-- 30-day TTL Quick Trigger -->
+      <!-- Current Subject Header Bar above Notes List -->
       <div class="px-3 py-1.5 bg-[var(--secondary)]/60 border-b border-[var(--border)] flex items-center justify-between gap-2 text-xs">
-        <span class="text-[var(--muted-foreground)] truncate">>30天未開自動卸載</span>
-        <button id="btn-run-ttl-cleanup" class="px-2 py-0.5 rounded bg-amber-500/20 text-amber-500 border border-amber-500/30 hover:bg-amber-500/30 font-medium shrink-0">
-          🧹 檢查卸載
-        </button>
+        <div class="flex items-center gap-1.5 min-w-0">
+          <span id="active-subject-dot" class="w-2.5 h-2.5 rounded-full bg-blue-500 shrink-0"></span>
+          <span id="active-subject-title" class="font-bold text-[var(--foreground)] truncate">所有筆記</span>
+        </div>
+        <span id="active-subject-count" class="text-[10px] font-mono text-[var(--muted-foreground)] shrink-0">0 份筆記</span>
       </div>
 
       <!-- Notes List Container -->
@@ -576,23 +614,56 @@
 
     const PAPER_BASE_WIDTH = 760;
     const PAPER_BASE_HEIGHT = 1020;
-    const PAGE_VERTICAL_GAP = 22;
+    // Seamless top-to-bottom continuous page connection (0px gap between sheets!)
+    const PAGE_VERTICAL_GAP = 0;
     const STORAGE_KEY_LOCAL_IPAD = 'inkflow_ipad_local_db_v1';
     const STORAGE_KEY_GOOGLE_DRIVE = 'inkflow_simulated_gdrive_v1';
-    const STORAGE_KEY_SUBJECTS = 'inkflow_subjects_v1';
+    const STORAGE_KEY_SUBJECTS = 'inkflow_subjects_v2';
+    const STORAGE_KEY_DIVIDERS = 'inkflow_dividers_v1';
+
+    const DEFAULT_DIVIDERS = [
+      { id: 'div_courses', name: '專業科目與課程', collapsed: false },
+      { id: 'div_research', name: '研究與論文文獻', collapsed: false },
+      { id: 'div_projects', name: '營隊企劃與行政', collapsed: false }
+    ];
 
     const DEFAULT_SUBJECTS = [
-      { id: 'subj_math', name: '📐 理工與微積分', color: '#3B82F6' },
-      { id: 'subj_lang', name: '🇯🇵 語言與人文', color: '#10B981' },
-      { id: 'subj_work', name: '💼 課程與專案', color: '#F59E0B' },
-      { id: 'subj_uncat', name: '📁 未分類筆記', color: '#94A3B8' }
+      { id: 'subj_math', name: '理工與微積分', color: '#3B82F6', dividerId: 'div_courses' },
+      { id: 'subj_fluid', name: '熱流與流體力學', color: '#06B6D4', dividerId: 'div_courses' },
+      { id: 'subj_lang', name: '語言與通識人文', color: '#10B981', dividerId: 'div_courses' },
+      { id: 'subj_paper', name: '實驗與期刊文獻', color: '#8B5CF6', dividerId: 'div_research' },
+      { id: 'subj_work', name: '營隊細流與表單', color: '#F59E0B', dividerId: 'div_projects' },
+      { id: 'subj_uncat', name: '未分類筆記', color: '#94A3B8', dividerId: null }
     ];
+
+    let dividersDB = [];
+    try {
+      const savedDiv = localStorage.getItem(STORAGE_KEY_DIVIDERS);
+      dividersDB = savedDiv ? JSON.parse(savedDiv) : DEFAULT_DIVIDERS;
+      if (!Array.isArray(dividersDB) || dividersDB.length === 0) dividersDB = DEFAULT_DIVIDERS;
+    } catch (e) {
+      dividersDB = DEFAULT_DIVIDERS;
+    }
+    function saveDividersDB() {
+      try { localStorage.setItem(STORAGE_KEY_DIVIDERS, JSON.stringify(dividersDB)); } catch (e) {}
+    }
 
     let subjectsDB = [];
     try {
-      const savedSubj = localStorage.getItem(STORAGE_KEY_SUBJECTS);
+      const savedSubj = localStorage.getItem(STORAGE_KEY_SUBJECTS) || localStorage.getItem('inkflow_subjects_v1');
       subjectsDB = savedSubj ? JSON.parse(savedSubj) : DEFAULT_SUBJECTS;
-      if (!Array.isArray(subjectsDB) || subjectsDB.length === 0) subjectsDB = DEFAULT_SUBJECTS;
+      if (!Array.isArray(subjectsDB) || subjectsDB.length === 0) {
+        subjectsDB = DEFAULT_SUBJECTS;
+      } else {
+        // Ensure every subject has a dividerId and clean name for Notability tree
+        subjectsDB.forEach(s => {
+          s.name = String(s.name || '').replace(/^[📐🇯🇵💼📁📂📘🧪]+\s*/, '') || '未命名主題';
+          if (s.id === 'subj_math' && !s.dividerId) s.dividerId = 'div_courses';
+          else if (s.id === 'subj_lang' && !s.dividerId) s.dividerId = 'div_courses';
+          else if (s.id === 'subj_work' && !s.dividerId) s.dividerId = 'div_projects';
+          else if (s.id !== 'subj_uncat' && !s.dividerId) s.dividerId = dividersDB[0]?.id || 'div_courses';
+        });
+      }
     } catch (e) {
       subjectsDB = DEFAULT_SUBJECTS;
     }
@@ -605,6 +676,8 @@
       sidebarOpen: window.innerWidth >= 768,
       scrollMode: 'vertical', // 'vertical' (Notability continuous vertical writing) or 'single' (page flip)
       selectedSubjectFilter: 'all',
+      creatorMode: 'subject', // 'subject' | 'divider'
+      creatorSelectedColor: '#3B82F6',
       fingerAlwaysPan: true,
       fingerDoubleTapEraser: true,
       scratchToEraseEnabled: true,
@@ -952,7 +1025,8 @@
     }
 
     // Convert parsed Notability Session.plist (and all nested plists) into InkFlow Note structure
-    function convertNotabilityPlistToInkFlow(fileName, plistBytesList, pdfPageDims = null) {
+    // Uses exact Notability document coordinate metadata (pageWidthInDocumentCoordsKey, paperSizingBehavior, +16pt inset)
+    function convertNotabilityPlistToInkFlow(fileName, plistBytesList, pdfPageDimsList = null) {
       const cleanTitle = fileName.replace(/\.(note|zip|plist|pdf)$/i, '');
       const byteArrays = Array.isArray(plistBytesList) ? plistBytesList : [plistBytesList];
       const allPlists = [];
@@ -965,7 +1039,13 @@
       const seenStrings = new Set();
       const allRawDataBuffers = [];
 
-      const ignoreStrPattern = /^(\$|\.|NS|UI|CF|NB|GL|CA|WK|_|http|com\.|apple|notability|gingerlabs|Session|Handwriting|Paper|RichMedia|font|color|style|width|height|page|curve|point|stroke|index|version|uuid|date|time|title|name|type|class|object|data|array|dict|string|number|true|false|null)/i;
+      // Exact Notability Document Coordinate Layout Metadata from Session.plist
+      let plistPageWidthDocCoords = null;
+      let plistPaperSizingBehavior = '';
+      let plistPaperSize = '';
+      let plistSubjectName = '';
+
+      const ignoreStrPattern = /^(\$|\.|NS|UI|CF|NB|GL|CA|WK|_|http|com\.|apple|notability|gingerlabs|Session|Handwriting|Paper|RichMedia|font|color|style|width|height|page|curve|point|stroke|index|version|uuid|date|time|title|name|type|class|object|data|array|dict|string|number|true|false|null|lockedwidth|staticwidth|devicebasedwidth|unsortednoteskey|legacy)/i;
 
       for (const plist of allPlists) {
         const { cache, numObjects, deref, resolveDataBuffer } = plist;
@@ -982,25 +1062,55 @@
           const refs = obj.__dictRefs;
           const keys = Object.keys(refs);
 
-          // Match curve dictionaries (case-insensitive)
-          let ptsBuf = null, numPtsBuf = null, widthsBuf = null, colorsBuf = null, fracWidthsBuf = null;
+          // Extract Notability Document Coordinate System parameters!
+          for (const k of keys) {
+            const kl = k.toLowerCase();
+            if (kl === 'pagewidthindocumentcoordskey') {
+              const wVal = deref(refs[k]);
+              if (typeof wVal === 'number' && wVal > 50 && wVal < 5000) {
+                plistPageWidthDocCoords = wVal;
+              }
+            } else if (kl === 'papersizingbehavior') {
+              const sVal = deref(refs[k]);
+              if (typeof sVal === 'string') {
+                plistPaperSizingBehavior = sVal;
+                const m = sVal.match(/lockedWidth:([0-9.]+)/i);
+                if (m && !plistPageWidthDocCoords) {
+                  plistPageWidthDocCoords = parseFloat(m[1]);
+                }
+              }
+            } else if (kl === 'papersize') {
+              const pVal = deref(refs[k]);
+              if (typeof pVal === 'string') plistPaperSize = pVal.toLowerCase();
+            } else if (kl === 'subject' || kl === 'notesubject') {
+              const subjVal = deref(refs[k]);
+              if (typeof subjVal === 'string' && subjVal.trim() && subjVal.trim() !== 'unsortedNotesKey') {
+                plistSubjectName = subjVal.trim();
+              }
+            }
+          }
+
+          // Match curve dictionaries (case-insensitive, supporting both curveswidth singular and curveswidths plural!)
+          let ptsBuf = null, numPtsBuf = null, widthsBuf = null, colorsBuf = null, fracWidthsBuf = null, stylesBuf = null;
           for (const k of keys) {
             const kl = k.toLowerCase();
             if (kl === 'curvespoints' || kl === 'curvepoints' || kl === 'pointsdata' || kl === 'stroke_points') {
               ptsBuf = resolveDataBuffer(refs[k]) || ptsBuf;
             } else if (kl === 'curvesnumpoints' || kl === 'curvenumpoints' || kl === 'numpoints' || kl === 'stroke_counts') {
               numPtsBuf = resolveDataBuffer(refs[k]) || numPtsBuf;
-            } else if (kl === 'curveswidths' || kl === 'curvewidths' || kl === 'widths' || kl === 'stroke_widths') {
+            } else if (kl === 'curveswidth' || kl === 'curveswidths' || kl === 'curvewidth' || kl === 'curvewidths' || kl === 'widths' || kl === 'stroke_widths') {
               widthsBuf = resolveDataBuffer(refs[k]) || widthsBuf;
             } else if (kl === 'curvescolors' || kl === 'curvecolors' || kl === 'colors' || kl === 'stroke_colors') {
               colorsBuf = resolveDataBuffer(refs[k]) || colorsBuf;
             } else if (kl === 'curvesfractionalwidths' || kl === 'fractionalwidths') {
               fracWidthsBuf = resolveDataBuffer(refs[k]) || fracWidthsBuf;
+            } else if (kl === 'curvesstyles' || kl === 'curvestyles') {
+              stylesBuf = resolveDataBuffer(refs[k]) || stylesBuf;
             }
           }
 
           if (ptsBuf && ptsBuf.byteLength >= 8) {
-            curveGroups.push({ ptsBuf, numPtsBuf, widthsBuf, colorsBuf, fracWidthsBuf });
+            curveGroups.push({ ptsBuf, numPtsBuf, widthsBuf, colorsBuf, fracWidthsBuf, stylesBuf });
           }
 
           // Extract user text strings (dereferencing CF$UID!)
@@ -1027,7 +1137,7 @@
 
       // Pass 1: Extract from standard Notability curve groups
       for (const grp of curveGroups) {
-        const { ptsBuf, numPtsBuf, widthsBuf, colorsBuf, fracWidthsBuf } = grp;
+        const { ptsBuf, numPtsBuf, widthsBuf, colorsBuf, fracWidthsBuf, stylesBuf } = grp;
         const alignedPtsBuf = ptsBuf.buffer.slice(ptsBuf.byteOffset, ptsBuf.byteOffset + (ptsBuf.byteLength - (ptsBuf.byteLength % 8)));
         const ptFloats = new Float32Array(alignedPtsBuf);
         const totalPoints = Math.floor(ptFloats.length / 2);
@@ -1049,7 +1159,6 @@
             strokeCounts = Array.from(new Uint16Array(numPtsBuf.buffer.slice(numPtsBuf.byteOffset, numPtsBuf.byteOffset + numPtsBuf.byteLength)));
           } else if (numPtsBuf.byteLength >= 4) {
             const int32s = Array.from(new Int32Array(numPtsBuf.buffer.slice(numPtsBuf.byteOffset, numPtsBuf.byteOffset + (numPtsBuf.byteLength - (numPtsBuf.byteLength % 4)))));
-            // Detect whether int32s are cumulative endpoints vs per-stroke counts
             const sum = int32s.reduce((a, b) => a + (b > 0 ? b : 0), 0);
             const isCumulative = int32s.length > 1 && int32s[int32s.length - 1] === totalPoints && sum > totalPoints * 1.5;
             if (isCumulative) {
@@ -1095,10 +1204,13 @@
             hexColor = `#${r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
             if (a > 0 && a < 210) isHighlighter = true;
           }
+          if (stylesBuf && sIdx < stylesBuf.byteLength && stylesBuf[sIdx] === 4) {
+            isHighlighter = true;
+          }
 
           const rawW = (widthsArr && sIdx < widthsArr.length && Number.isFinite(widthsArr[sIdx]) && widthsArr[sIdx] > 0)
             ? widthsArr[sIdx]
-            : 2.8;
+            : 2.4;
           if (rawW > 11) isHighlighter = true;
 
           rawStrokes.push({ points: pts, hexColor, rawWidth: rawW, isHighlighter });
@@ -1151,15 +1263,28 @@
         }
       }
 
-      const defaultAspectRatio = (pdfPageDims && pdfPageDims.widthPt > 0 && pdfPageDims.heightPt > 0)
-        ? (pdfPageDims.heightPt / pdfPageDims.widthPt)
-        : (PAPER_BASE_HEIGHT / PAPER_BASE_WIDTH);
-      const targetPageHeight = Math.max(360, Math.min(1800, Math.round(PAPER_BASE_WIDTH * defaultAspectRatio)));
+      const dimsArr = Array.isArray(pdfPageDimsList) && pdfPageDimsList.length > 0
+        ? pdfPageDimsList
+        : (pdfPageDimsList && pdfPageDimsList.widthPt ? [pdfPageDimsList] : []);
+
+      const getPageAspectRatio = (pageIdx) => {
+        if (dimsArr.length > 0) {
+          const d = dimsArr[Math.min(pageIdx, dimsArr.length - 1)];
+          if (d && d.widthPt > 0 && d.heightPt > 0) return d.heightPt / d.widthPt;
+        }
+        if (plistPaperSize === 'a4') return 841.92 / 595.32;
+        if (plistPaperSize === 'letter') return 792.0 / 612.0;
+        return PAPER_BASE_HEIGHT / PAPER_BASE_WIDTH;
+      };
+
+      const getTargetPageHeight = (pageIdx) => {
+        return Math.max(360, Math.min(1800, Math.round(PAPER_BASE_WIDTH * getPageAspectRatio(pageIdx))));
+      };
 
       const pagesMap = {};
       const ensurePage = (pageIdx) => {
         if (!pagesMap[pageIdx]) {
-          pagesMap[pageIdx] = { pageNumber: pageIdx + 1, pageHeight: targetPageHeight, strokes: {}, texts: {}, bgImage: null };
+          pagesMap[pageIdx] = { pageNumber: pageIdx + 1, pageHeight: getTargetPageHeight(pageIdx), strokes: {}, texts: {}, bgImage: null };
         }
         return pagesMap[pageIdx];
       };
@@ -1168,36 +1293,73 @@
       let totalExtractedStrokes = 0;
 
       if (rawStrokes.length > 0) {
-        // Auto-detect Notability page coordinate width & height from actual stroke bounds + PDF dimensions
         let maxCoordX = 0;
-        let minCoordY = Infinity;
+        let maxCoordY = 0;
         for (const s of rawStrokes) {
           for (const p of s.points) {
             if (p.x > maxCoordX) maxCoordX = p.x;
-            if (p.y < minCoordY) minCoordY = p.y;
+            if (p.y > maxCoordY) maxCoordY = p.y;
           }
         }
 
-        let sourcePageWidth = (pdfPageDims && pdfPageDims.widthPt > 100) ? pdfPageDims.widthPt : 612;
-        if (maxCoordX <= 1.5) sourcePageWidth = 1.0;
-        else if (maxCoordX > sourcePageWidth * 1.05 && maxCoordX <= 820) sourcePageWidth = 768;
-        else if (maxCoordX > 820) sourcePageWidth = maxCoordX * 1.03;
+        // Priority 1: Use exact pageWidthInDocumentCoordsKey from Session.plist (e.g. 716.8 iPad, 610 Letter, 593.33 A4, 262.5 iPhone)
+        let sourcePageWidth = plistPageWidthDocCoords;
+        if (!sourcePageWidth || sourcePageWidth <= 0) {
+          if (maxCoordX <= 1.5) sourcePageWidth = 1.0;
+          else if (plistPaperSize === 'a4' && maxCoordX <= 605) sourcePageWidth = 593.3302612304688;
+          else if (plistPaperSize === 'letter' && maxCoordX <= 620) sourcePageWidth = 610.0;
+          else sourcePageWidth = 716.7999877929688;
+        }
 
-        const scale = PAPER_BASE_WIDTH / sourcePageWidth;
-        const pageHeightPt = sourcePageWidth * defaultAspectRatio;
-        const yOffset = minCoordY < 0 ? -minCoordY : 0;
+        // Notability's NSTextContainer / HandwritingOverlay has a 16.0pt left inset relative to paper origin
+        const xInsetPt = sourcePageWidth > 100 ? 16.0 : 0.0;
+        const effectiveDocWidthForHeight = sourcePageWidth <= 1.5
+          ? sourcePageWidth
+          : (plistPaperSizingBehavior === 'staticWidth' ? (sourcePageWidth + 2.0) : (sourcePageWidth + 1.2));
+
+        // Build cumulative per-page Y boundaries in Notability document coordinate space
+        const maxEstimatedPages = Math.max(dimsArr.length, Math.ceil(maxCoordY / 240) + 5, 6);
+        const docPageYStarts = new Float64Array(maxEstimatedPages + 1);
+        const docPageHeights = new Float64Array(maxEstimatedPages);
+        let accY = 0;
+        for (let i = 0; i < maxEstimatedPages; i++) {
+          docPageYStarts[i] = accY;
+          const dh = effectiveDocWidthForHeight * getPageAspectRatio(i);
+          docPageHeights[i] = dh;
+          accY += dh;
+        }
+        docPageYStarts[maxEstimatedPages] = accY;
+
+        const scaleX = PAPER_BASE_WIDTH / sourcePageWidth;
 
         rawStrokes.forEach((s, sIdx) => {
           let avgY = 0;
-          for (const p of s.points) avgY += (p.y + yOffset);
+          for (const p of s.points) avgY += p.y;
           avgY /= s.points.length;
 
-          const pageIdx = Math.max(0, Math.floor(avgY / pageHeightPt));
-          const pageObj = ensurePage(pageIdx);
+          let pageIdx = 0;
+          if (avgY > 0) {
+            for (let i = 0; i < maxEstimatedPages; i++) {
+              if (avgY >= docPageYStarts[i] && avgY < docPageYStarts[i + 1]) {
+                pageIdx = i;
+                break;
+              }
+              if (i === maxEstimatedPages - 1 && avgY >= docPageYStarts[i]) {
+                pageIdx = i;
+              }
+            }
+          }
 
+          const pageObj = ensurePage(pageIdx);
+          const targetPageH = pageObj.pageHeight || getTargetPageHeight(pageIdx);
+          const docPageH = docPageHeights[pageIdx] || (effectiveDocWidthForHeight * getPageAspectRatio(pageIdx));
+          const scaleY = targetPageH / docPageH;
+          const pageY0 = docPageYStarts[pageIdx] || 0;
+
+          // Keep cross-page stroke continuity (no artificial vertical clamping at page edges!)
           const normalizedPoints = s.points.map(p => ({
-            x: Math.min(PAPER_BASE_WIDTH - 2, Math.max(2, p.x * scale)),
-            y: Math.min(targetPageHeight - 2, Math.max(2, ((p.y + yOffset) - pageIdx * pageHeightPt) * scale)),
+            x: (p.x + xInsetPt) * scaleX,
+            y: (p.y - pageY0) * scaleY,
             p: p.p || 0.7
           }));
 
@@ -1206,7 +1368,7 @@
             id: strokeId,
             tool: s.isHighlighter ? 'highlighter' : 'pen',
             color: s.hexColor,
-            size: Math.min(24, Math.max(1.6, s.rawWidth * (sourcePageWidth <= 1.5 ? 1 : scale))),
+            size: Math.min(24, Math.max(1.5, s.rawWidth * (sourcePageWidth <= 1.5 ? 1 : scaleX))),
             dash: 'solid',
             device: 'Notability匯入',
             createdAt: Date.now(),
@@ -1240,16 +1402,32 @@
         const pg = ensurePage(pIdx);
         sortedPages.push({
           pageNumber: pIdx + 1,
-          pageHeight: pg.pageHeight || targetPageHeight,
+          pageHeight: pg.pageHeight || getTargetPageHeight(pIdx),
           strokes: pg.strokes,
           texts: pg.texts,
           bgImage: pg.bgImage || null
         });
       }
 
-      const targetSubject = (state.selectedSubjectFilter && state.selectedSubjectFilter !== 'all')
+      // If the .note file specified a Notability subject name, auto-match or create it in subjectsDB!
+      let targetSubject = (state.selectedSubjectFilter && !['all', 'recent', 'subj_uncat'].includes(state.selectedSubjectFilter))
         ? state.selectedSubjectFilter
         : 'subj_uncat';
+
+      if (plistSubjectName) {
+        let matched = subjectsDB.find(s => s.name === plistSubjectName);
+        if (!matched) {
+          matched = {
+            id: `subj_nb_${Date.now().toString(36)}`,
+            name: plistSubjectName,
+            color: '#3B82F6',
+            dividerId: dividersDB[0]?.id || 'div_courses'
+          };
+          subjectsDB.push(matched);
+          saveSubjectsDB();
+        }
+        targetSubject = matched.id;
+      }
 
       return {
         note: {
@@ -1294,20 +1472,24 @@
       return `data:${mimeType};base64,${btoa(binary)}`;
     }
 
-    // Inspect first PDF page dimensions before converting strokes so coordinates & aspect ratio match 100%!
-    async function probeFirstPdfDimensions(unzippedFiles) {
-      const pdfKey = Object.keys(unzippedFiles).find(k => k.toLowerCase().endsWith('.pdf'));
-      if (!pdfKey) return null;
+    // Inspect all PDF page dimensions before converting strokes so multi-page coordinates & aspect ratios match 100%!
+    async function probeAllPdfPagesDimensions(unzippedFiles) {
+      const pdfKeys = Object.keys(unzippedFiles).filter(k => k.toLowerCase().endsWith('.pdf'));
+      if (pdfKeys.length === 0) return [];
+      const dimsList = [];
       try {
         const pdfjs = await ensurePdfJsLoaded();
-        if (!pdfjs) return null;
-        const pdfDoc = await pdfjs.getDocument({ data: unzippedFiles[pdfKey].slice() }).promise;
-        const page1 = await pdfDoc.getPage(1);
-        const vp = page1.getViewport({ scale: 1.0 });
-        return { widthPt: vp.width, heightPt: vp.height };
-      } catch (e) {
-        return null;
-      }
+        if (!pdfjs) return [];
+        for (const pdfKey of pdfKeys) {
+          const pdfDoc = await pdfjs.getDocument({ data: unzippedFiles[pdfKey].slice() }).promise;
+          for (let pNum = 1; pNum <= pdfDoc.numPages; pNum++) {
+            const pg = await pdfDoc.getPage(pNum);
+            const vp = pg.getViewport({ scale: 1.0 });
+            dimsList.push({ widthPt: vp.width, heightPt: vp.height });
+          }
+        }
+      } catch (e) {}
+      return dimsList;
     }
 
     async function enrichNoteWithEmbeddedPdfAndImages(note, unzippedFiles) {
@@ -1390,14 +1572,16 @@
         .filter(k => k.toLowerCase().endsWith('.plist'))
         .sort((a, b) => (b.toLowerCase().endsWith('session.plist') ? 1 : 0) - (a.toLowerCase().endsWith('session.plist') ? 1 : 0));
 
-      const pdfDims = await probeFirstPdfDimensions(unzipped);
+      const pdfDimsList = await probeAllPdfPagesDimensions(unzipped);
 
       if (plistKeys.length === 0) {
         // If no plist but has PDF (e.g., a zipped PDF or PDF inside folder), build note from PDF!
         const hasPdf = allKeys.some(k => k.toLowerCase().endsWith('.pdf'));
         if (hasPdf) {
           const cleanTitle = fileName.replace(/\.(note|zip|pdf)$/i, '');
-          const targetSubject = (state.selectedSubjectFilter && state.selectedSubjectFilter !== 'all') ? state.selectedSubjectFilter : 'subj_uncat';
+          const targetSubject = (state.selectedSubjectFilter && !['all', 'recent', 'subj_uncat'].includes(state.selectedSubjectFilter))
+            ? state.selectedSubjectFilter
+            : 'subj_uncat';
           const note = {
             id: `note_pdf_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
             title: `📄 ${cleanTitle}`,
@@ -1416,7 +1600,7 @@
       }
 
       const plistBuffers = plistKeys.map(k => unzipped[k]);
-      const result = convertNotabilityPlistToInkFlow(fileName, plistBuffers, pdfDims);
+      const result = convertNotabilityPlistToInkFlow(fileName, plistBuffers, pdfDimsList);
       const pdfPageCount = await enrichNoteWithEmbeddedPdfAndImages(result.note, unzipped);
       result.totalPages = result.note.pages.length;
       result.pdfPageCount = pdfPageCount;
@@ -2257,12 +2441,6 @@
       bgCtx.clearRect(0, 0, PAPER_BASE_WIDTH, totalHeight);
       inkCtx.clearRect(0, 0, PAPER_BASE_WIDTH, totalHeight);
 
-      // Fill background behind page gaps in vertical continuous mode
-      if (pageSlots.length > 1) {
-        bgCtx.fillStyle = '#0f172a';
-        bgCtx.fillRect(0, 0, PAPER_BASE_WIDTH, totalHeight);
-      }
-
       for (const slot of pageSlots) {
         const page = note.pages[slot.pageIndex];
         if (!page) continue;
@@ -2277,14 +2455,12 @@
             const imgW = cachedImg.naturalWidth;
             const imgH = cachedImg.naturalHeight;
             const expectedPageH = Math.max(360, Math.min(1800, Math.round(PAPER_BASE_WIDTH * (imgH / imgW))));
-            // If an older imported PDF page didn't have its true aspect-ratio pageHeight set, auto-correct it!
             if (Math.abs((page.pageHeight || PAPER_BASE_HEIGHT) - expectedPageH) > 8) {
               page.pageHeight = expectedPageH;
               bgCtx.restore();
               requestAnimationFrame(() => renderActivePage());
               return;
             }
-            // Draw PDF/image with 100% aspect-ratio preservation (contain) so it NEVER stretches or deforms!
             const scale = Math.min(PAPER_BASE_WIDTH / imgW, slot.height / imgH);
             const drawW = imgW * scale;
             const drawH = imgH * scale;
@@ -2299,11 +2475,21 @@
           }
         }
 
-        // Subtle page number watermark & divider in vertical mode
+        // Seamless Notability-style 1px hairline seam & corner badge where connected pages meet
         if (state.scrollMode === 'vertical') {
-          bgCtx.fillStyle = 'rgba(100, 116, 139, 0.55)';
-          bgCtx.font = '600 11px ui-monospace, SFMono-Regular, monospace';
-          bgCtx.fillText(`Page ${slot.pageIndex + 1} / ${note.pages.length}`, PAPER_BASE_WIDTH - 92, slot.height - 12);
+          if (slot.pageIndex < note.pages.length - 1) {
+            bgCtx.strokeStyle = 'rgba(148, 163, 184, 0.55)';
+            bgCtx.lineWidth = 1;
+            bgCtx.setLineDash([6, 4]);
+            bgCtx.beginPath();
+            bgCtx.moveTo(0, slot.height - 0.5);
+            bgCtx.lineTo(PAPER_BASE_WIDTH, slot.height - 0.5);
+            bgCtx.stroke();
+            bgCtx.setLineDash([]);
+          }
+          bgCtx.fillStyle = 'rgba(100, 116, 139, 0.5)';
+          bgCtx.font = '600 10px ui-monospace, SFMono-Regular, monospace';
+          bgCtx.fillText(`P.${slot.pageIndex + 1} / ${note.pages.length}`, PAPER_BASE_WIDTH - 68, slot.height - 8);
         }
         bgCtx.restore();
 
@@ -2454,7 +2640,7 @@
 
       if (state.currentTool === 'eraser') {
         state.isDrawing = true;
-        eraseStrokesNearPoint(pt.x, pt.y);
+        eraseStrokesNearPoint(pt.x, pt.y, pt.globalY);
         return;
       }
 
@@ -2968,7 +3154,7 @@
       if (state.activeDrawingPointerType === 'pen' && e.pointerType !== 'pen') return;
 
       if (state.currentTool === 'eraser') {
-        eraseStrokesNearPoint(pt.x, pt.y);
+        eraseStrokesNearPoint(pt.x, pt.y, pt.globalY);
         return;
       }
 
@@ -3169,31 +3355,47 @@
     window.addEventListener('pointerup', handlePointerEnd);
     window.addEventListener('pointercancel', handlePointerEnd);
 
-    function eraseStrokesNearPoint(x, y) {
+    function eraseStrokesNearPoint(x, y, globalY = null) {
       const note = getActiveNote();
-      const page = note.pages[state.currentPageIndex];
+      if (!note) return;
       const rad = state.eraserRadius || 18;
       let erasedAny = false;
-      Object.values(page.strokes).forEach(s => {
-        if (s.deleted || !s.points || s.points.length === 0) return;
-        let hit = false;
-        if (s.points.length === 1) {
-          hit = Math.hypot(s.points[0].x - x, s.points[0].y - y) <= rad;
-        } else {
-          for (let i = 1; i < s.points.length; i++) {
-            if (pointToSegmentDist(x, y, s.points[i - 1].x, s.points[i - 1].y, s.points[i].x, s.points[i].y) <= rad) {
-              hit = true;
-              break;
+
+      const { pageSlots } = getPageLayoutMetrics(note);
+      const targetSlots = (state.scrollMode === 'vertical' && typeof globalY === 'number')
+        ? pageSlots
+        : [pageSlots.find(s => s.pageIndex === state.currentPageIndex) || pageSlots[0]];
+
+      for (const slot of targetSlots) {
+        if (!slot) continue;
+        const page = note.pages[slot.pageIndex];
+        if (!page || !page.strokes) continue;
+        const localY = (state.scrollMode === 'vertical' && typeof globalY === 'number')
+          ? (globalY - slot.yStart)
+          : y;
+
+        Object.values(page.strokes).forEach(s => {
+          if (s.deleted || !s.points || s.points.length === 0) return;
+          let hit = false;
+          if (s.points.length === 1) {
+            hit = Math.hypot(s.points[0].x - x, s.points[0].y - localY) <= rad;
+          } else {
+            for (let i = 1; i < s.points.length; i++) {
+              if (pointToSegmentDist(x, localY, s.points[i - 1].x, s.points[i - 1].y, s.points[i].x, s.points[i].y) <= rad) {
+                hit = true;
+                break;
+              }
             }
           }
-        }
-        if (hit) {
-          s.deleted = true;
-          s.updatedAt = Date.now();
-          state.undoStack.push({ type: 'erase_stroke', id: s.id, pageIndex: state.currentPageIndex });
-          erasedAny = true;
-        }
-      });
+          if (hit) {
+            s.deleted = true;
+            s.updatedAt = Date.now();
+            state.undoStack.push({ type: 'erase_stroke', id: s.id, pageIndex: slot.pageIndex });
+            erasedAny = true;
+          }
+        });
+      }
+
       if (erasedAny) {
         commitActiveNoteChange();
         renderActivePage();
@@ -3201,8 +3403,20 @@
     }
 
     /***********************************************************************
-     * NOTABILITY SUBJECTS (CATEGORIES) & SIDEBAR CATALOG
+     * NOTABILITY DIVIDERS (分隔條) & SUBJECTS (主題) HIERARCHY + CATALOG
      ***********************************************************************/
+    function moveNoteToSubject(noteId, targetSubjId) {
+      if (cloudDriveDB[noteId]) cloudDriveDB[noteId].subjectId = targetSubjId;
+      if (ipadLocalDB[noteId]) ipadLocalDB[noteId].subjectId = targetSubjId;
+      saveDatabases();
+      renderSidebarCatalog();
+      const meta = ipadLocalDB[noteId] || cloudDriveDB[noteId];
+      const sObj = subjectsDB.find(s => s.id === targetSubjId);
+      if (meta && sObj) {
+        showToast('🗂️', `已歸檔至「${sObj.name}」`, `「${meta.title}」已移入該主題項目。`);
+      }
+    }
+
     function renderSubjectsBar() {
       const subjContainer = document.getElementById('subjects-list');
       const headerSelect = document.getElementById('current-note-subject');
@@ -3210,7 +3424,7 @@
       subjContainer.innerHTML = '';
 
       const allIds = Array.from(new Set([...Object.keys(cloudDriveDB), ...Object.keys(ipadLocalDB)]));
-      const counts = { all: allIds.length };
+      const counts = { all: allIds.length, recent: Math.min(allIds.length, 6), subj_uncat: 0 };
       subjectsDB.forEach(s => { counts[s.id] = 0; });
       allIds.forEach(nid => {
         const meta = ipadLocalDB[nid] || cloudDriveDB[nid];
@@ -3219,36 +3433,217 @@
         counts[sid] = (counts[sid] || 0) + 1;
       });
 
-      const makeSubjBtn = (id, label, count) => {
+      // Helper to build a Notability Subject / Smart Filter row (supports Drag & Drop note filing!)
+      const makeSubjectRow = (id, label, count, colorHex, isIndented = false, canDelete = false) => {
         const active = state.selectedSubjectFilter === id;
-        const btn = document.createElement('button');
-        btn.type = 'button';
-        btn.className = `px-2 py-1 rounded-lg text-[11px] font-medium flex items-center gap-1 transition-all border ${
+        const row = document.createElement('div');
+        row.className = `group w-full flex items-center justify-between gap-1.5 px-2 py-1.5 rounded-lg text-xs transition-all cursor-pointer select-none ${
+          isIndented ? 'pl-5' : ''
+        } ${
           active
-            ? 'bg-[var(--primary)] text-[var(--primary-foreground)] border-[var(--primary)] shadow-xs'
-            : 'bg-[var(--card)] text-[var(--foreground)] border-[var(--border)] hover:bg-[var(--secondary)]'
+            ? 'bg-[var(--primary)] text-[var(--primary-foreground)] font-bold shadow-xs'
+            : 'hover:bg-[var(--secondary)] text-[var(--foreground)] font-medium'
         }`;
-        btn.innerHTML = `<span class="truncate max-w-[110px]">${label}</span><span class="opacity-75 font-mono text-[10px]">(${count})</span>`;
-        btn.addEventListener('click', () => {
+
+        row.innerHTML = `
+          <div class="flex items-center gap-2 min-w-0 flex-1">
+            <span class="w-2.5 h-3.5 rounded-xs shrink-0" style="background:${colorHex};"></span>
+            <span class="truncate">${label}</span>
+          </div>
+          <div class="flex items-center gap-1 shrink-0">
+            ${canDelete ? `<button type="button" data-del-subj="${id}" class="opacity-0 group-hover:opacity-100 px-1 rounded hover:bg-red-500/25 text-[10px] ${active ? 'text-white' : 'text-[var(--muted-foreground)]'}" title="刪除此主題">✕</button>` : ''}
+            <span class="px-1.5 py-0.2 rounded-full text-[10px] font-mono ${
+              active ? 'bg-black/20 text-white' : 'bg-[var(--secondary)] text-[var(--muted-foreground)]'
+            }">${count}</span>
+          </div>
+        `;
+
+        row.addEventListener('click', (ev) => {
+          if (ev.target.closest('[data-del-subj]')) return;
           state.selectedSubjectFilter = id;
-          renderSubjectsBar();
           renderSidebarCatalog();
         });
-        return btn;
+
+        // Allow dragging a note card onto any Subject row to file it (Notability style!)
+        if (!['all', 'recent'].includes(id)) {
+          row.addEventListener('dragover', (ev) => {
+            ev.preventDefault();
+            row.classList.add('ring-2', 'ring-amber-400');
+          });
+          row.addEventListener('dragleave', () => {
+            row.classList.remove('ring-2', 'ring-amber-400');
+          });
+          row.addEventListener('drop', (ev) => {
+            ev.preventDefault();
+            ev.stopPropagation();
+            row.classList.remove('ring-2', 'ring-amber-400');
+            const draggedNoteId = ev.dataTransfer?.getData('text/inkflow-note-id');
+            if (draggedNoteId) {
+              moveNoteToSubject(draggedNoteId, id);
+            }
+          });
+        }
+
+        const delBtn = row.querySelector(`[data-del-subj="${id}"]`);
+        if (delBtn) {
+          delBtn.addEventListener('click', (ev) => {
+            ev.stopPropagation();
+            if (!confirm(`確定要刪除主題「${label}」嗎？（裡面的筆記會移至未分類，不會被刪除）`)) return;
+            Object.keys(cloudDriveDB).forEach(nid => {
+              if (cloudDriveDB[nid].subjectId === id) cloudDriveDB[nid].subjectId = 'subj_uncat';
+            });
+            Object.keys(ipadLocalDB).forEach(nid => {
+              if (ipadLocalDB[nid].subjectId === id) ipadLocalDB[nid].subjectId = 'subj_uncat';
+            });
+            subjectsDB = subjectsDB.filter(s => s.id !== id);
+            if (state.selectedSubjectFilter === id) state.selectedSubjectFilter = 'all';
+            saveSubjectsDB();
+            saveDatabases();
+            renderSidebarCatalog();
+          });
+        }
+
+        return row;
       };
 
-      subjContainer.appendChild(makeSubjBtn('all', '📚 全部筆記', counts.all || 0));
-      subjectsDB.forEach(s => {
-        subjContainer.appendChild(makeSubjBtn(s.id, s.name, counts[s.id] || 0));
+      // 1. Top Notability Smart Filters: 所有筆記 / 最近開啟 / 未分類筆記
+      subjContainer.appendChild(makeSubjectRow('all', '所有筆記 (All Notes)', counts.all || 0, '#3B82F6', false, false));
+      subjContainer.appendChild(makeSubjectRow('recent', '最近開啟 (Recent)', counts.recent || 0, '#10B981', false, false));
+      const uncatObj = subjectsDB.find(s => s.id === 'subj_uncat') || { id: 'subj_uncat', name: '未分類筆記', color: '#94A3B8' };
+      subjContainer.appendChild(makeSubjectRow('subj_uncat', uncatObj.name, counts.subj_uncat || 0, '#94A3B8', false, false));
+
+      // 2. Collapsible Dividers (分隔條) & their nested Subjects (主題)
+      dividersDB.forEach(div => {
+        const childSubjects = subjectsDB.filter(s => s.id !== 'subj_uncat' && s.dividerId === div.id);
+        const divNoteCount = childSubjects.reduce((sum, s) => sum + (counts[s.id] || 0), 0);
+
+        const divHeader = document.createElement('div');
+        divHeader.className = 'group flex items-center justify-between px-2 py-1 mt-1 rounded-md text-[11px] font-bold uppercase tracking-wider text-[var(--muted-foreground)] hover:text-[var(--foreground)] hover:bg-[var(--secondary)]/60 cursor-pointer select-none';
+        divHeader.innerHTML = `
+          <div class="flex items-center gap-1.5 min-w-0 flex-1">
+            <span class="text-[10px] transition-transform inline-block">${div.collapsed ? '▸' : '▾'}</span>
+            <span class="truncate">${div.name}</span>
+          </div>
+          <div class="flex items-center gap-1">
+            <button type="button" data-add-in-div="${div.id}" class="opacity-0 group-hover:opacity-100 px-1 rounded hover:bg-blue-500/20 text-blue-400 text-[10px]" title="在此分隔條下新增主題">＋</button>
+            <button type="button" data-del-div="${div.id}" class="opacity-0 group-hover:opacity-100 px-1 rounded hover:bg-red-500/20 text-red-400 text-[10px]" title="刪除此分隔條">✕</button>
+            <span class="text-[10px] font-mono opacity-70">${divNoteCount}</span>
+          </div>
+        `;
+
+        divHeader.addEventListener('click', (ev) => {
+          if (ev.target.closest('[data-add-in-div]') || ev.target.closest('[data-del-div]')) return;
+          div.collapsed = !div.collapsed;
+          saveDividersDB();
+          renderSubjectsBar();
+        });
+
+        divHeader.querySelector(`[data-add-in-div="${div.id}"]`)?.addEventListener('click', (ev) => {
+          ev.stopPropagation();
+          div.collapsed = false;
+          saveDividersDB();
+          openSubjectOrDividerCreator('subject', div.id);
+        });
+
+        divHeader.querySelector(`[data-del-div="${div.id}"]`)?.addEventListener('click', (ev) => {
+          ev.stopPropagation();
+          if (!confirm(`確定要刪除分隔條「${div.name}」嗎？（裡面的主題會保留）`)) return;
+          const fallbackDiv = dividersDB.find(d => d.id !== div.id)?.id || null;
+          subjectsDB.forEach(s => {
+            if (s.dividerId === div.id) s.dividerId = fallbackDiv;
+          });
+          dividersDB = dividersDB.filter(d => d.id !== div.id);
+          saveDividersDB();
+          saveSubjectsDB();
+          renderSubjectsBar();
+        });
+
+        subjContainer.appendChild(divHeader);
+
+        if (!div.collapsed) {
+          childSubjects.forEach(s => {
+            subjContainer.appendChild(makeSubjectRow(s.id, s.name, counts[s.id] || 0, s.color || '#3B82F6', true, true));
+          });
+        }
       });
 
+      // Any custom subjects without a dividerId
+      const orphanSubjects = subjectsDB.filter(s => s.id !== 'subj_uncat' && (!s.dividerId || !dividersDB.some(d => d.id === s.dividerId)));
+      orphanSubjects.forEach(s => {
+        subjContainer.appendChild(makeSubjectRow(s.id, s.name, counts[s.id] || 0, s.color || '#3B82F6', false, true));
+      });
+
+      // Populate top navbar quick subject selector with optgroups by Divider
       if (headerSelect) {
         const activeNote = getActiveNote();
-        headerSelect.innerHTML = subjectsDB.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
+        let html = '';
+        dividersDB.forEach(div => {
+          const children = subjectsDB.filter(s => s.id !== 'subj_uncat' && s.dividerId === div.id);
+          if (children.length > 0) {
+            html += `<optgroup label="▾ ${div.name}">`;
+            children.forEach(s => {
+              html += `<option value="${s.id}">● ${s.name}</option>`;
+            });
+            html += `</optgroup>`;
+          }
+        });
+        html += `<option value="subj_uncat">📁 未分類筆記</option>`;
+        headerSelect.innerHTML = html;
         if (activeNote) {
           headerSelect.value = activeNote.subjectId || 'subj_uncat';
         }
       }
+
+      // Update active subject header bar above the notes list
+      const dotEl = document.getElementById('active-subject-dot');
+      const titleEl = document.getElementById('active-subject-title');
+      const countEl = document.getElementById('active-subject-count');
+      if (titleEl && countEl && dotEl) {
+        if (state.selectedSubjectFilter === 'all') {
+          dotEl.style.background = '#3B82F6';
+          titleEl.textContent = '所有筆記 (All Notes)';
+          countEl.textContent = `${counts.all || 0} 份筆記`;
+        } else if (state.selectedSubjectFilter === 'recent') {
+          dotEl.style.background = '#10B981';
+          titleEl.textContent = '最近開啟 (Recent)';
+          countEl.textContent = `${counts.recent || 0} 份筆記`;
+        } else {
+          const curSubj = subjectsDB.find(s => s.id === state.selectedSubjectFilter) || uncatObj;
+          dotEl.style.background = curSubj.color || '#94A3B8';
+          titleEl.textContent = curSubj.name;
+          countEl.textContent = `${counts[curSubj.id] || 0} 份筆記`;
+        }
+      }
+    }
+
+    function openSubjectOrDividerCreator(mode = 'subject', defaultDividerId = null) {
+      state.creatorMode = mode;
+      const box = document.getElementById('subject-creator-box');
+      const title = document.getElementById('creator-box-title');
+      const input = document.getElementById('input-new-subj-name');
+      const divRow = document.getElementById('creator-divider-row');
+      const colorRow = document.getElementById('creator-color-row');
+      const divSelect = document.getElementById('select-new-subj-divider');
+      if (!box || !input) return;
+
+      box.classList.remove('hidden');
+      input.value = '';
+      if (mode === 'divider') {
+        title.textContent = '📂 新增分隔條 (Divider 大分類)';
+        input.placeholder = '輸入分隔條名稱 (例：114學年下學期、專題研究)';
+        divRow?.classList.add('hidden');
+        colorRow?.classList.add('hidden');
+      } else {
+        title.textContent = '🎨 新增彩色主題 (Subject)';
+        input.placeholder = '輸入主題名稱 (例：工程數學、固體力學)';
+        divRow?.classList.remove('hidden');
+        colorRow?.classList.remove('hidden');
+        if (divSelect) {
+          divSelect.innerHTML = dividersDB.map(d => `<option value="${d.id}">${d.name}</option>`).join('');
+          if (defaultDividerId) divSelect.value = defaultDividerId;
+        }
+      }
+      setTimeout(() => input.focus(), 40);
     }
 
     function renderSidebarCatalog() {
@@ -3257,15 +3652,30 @@
       listEl.innerHTML = '';
       const allIds = Array.from(new Set([...Object.keys(cloudDriveDB), ...Object.keys(ipadLocalDB)]));
 
-      const filteredIds = allIds.filter(noteId => {
+      // Sort notes by updatedAt / lastOpenedAt descending
+      allIds.sort((a, b) => {
+        const mA = ipadLocalDB[a] || cloudDriveDB[a];
+        const mB = ipadLocalDB[b] || cloudDriveDB[b];
+        return ((mB?.lastOpenedAt || mB?.updatedAt || 0) - (mA?.lastOpenedAt || mA?.updatedAt || 0));
+      });
+
+      let filteredIds = allIds.filter(noteId => {
         const meta = ipadLocalDB[noteId] || cloudDriveDB[noteId];
         if (!meta) return false;
-        if (state.selectedSubjectFilter === 'all') return true;
+        if (state.selectedSubjectFilter === 'all' || state.selectedSubjectFilter === 'recent') return true;
         return (meta.subjectId || 'subj_uncat') === state.selectedSubjectFilter;
       });
 
+      if (state.selectedSubjectFilter === 'recent') {
+        filteredIds = filteredIds.slice(0, 6);
+      }
+
       if (filteredIds.length === 0) {
-        listEl.innerHTML = `<div class="p-4 text-center text-xs text-[var(--muted-foreground)]">此分類項目尚無筆記，可點右上「+ 新筆記」或從其他筆記卡片切換分類歸檔。</div>`;
+        listEl.innerHTML = `
+          <div class="p-4 text-center text-xs text-[var(--muted-foreground)] space-y-2">
+            <div>此主題目前尚無筆記</div>
+            <div class="text-[11px] opacity-80">可點右上「+ 新筆記」直接在此主題建立筆記，或從「所有筆記」把筆記歸檔進來！</div>
+          </div>`;
         return;
       }
 
@@ -3278,13 +3688,13 @@
         const isCurrent = noteId === state.currentNoteId;
         const isOffloadedOnIpad = Boolean(localCopy && localCopy.offloaded);
         const daysAgo = Math.floor((Date.now() - (meta.lastOpenedAt || meta.updatedAt)) / (1000 * 60 * 60 * 24));
-        const subjObj = subjectsDB.find(s => s.id === (meta.subjectId || 'subj_uncat')) || subjectsDB[subjectsDB.length - 1];
+        const subjObj = subjectsDB.find(s => s.id === (meta.subjectId || 'subj_uncat')) || { id: 'subj_uncat', name: '未分類筆記', color: '#94A3B8' };
 
         let storageTag = '';
         if (state.deviceMode === 'ipad') {
           storageTag = isOffloadedOnIpad
-            ? `<span class="px-1.5 py-0.5 rounded text-[10px] bg-amber-500/15 text-amber-400 border border-amber-500/30">☁️ 雲端封存</span>`
-            : `<span class="px-1.5 py-0.5 rounded text-[10px] bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">💾 本機原檔</span>`;
+            ? `<span class="px-1.5 py-0.5 rounded text-[10px] bg-amber-500/15 text-amber-400 border border-amber-500/30">☁️ 封存</span>`
+            : `<span class="px-1.5 py-0.5 rounded text-[10px] bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">💾 本機</span>`;
         } else {
           const inTemp = Boolean(state.iphoneTempCache[noteId]);
           storageTag = inTemp
@@ -3293,24 +3703,31 @@
         }
 
         const card = document.createElement('div');
-        card.className = `w-full text-left p-2.5 rounded-xl border transition-all cursor-pointer ${
-          isCurrent ? 'bg-[var(--secondary)] border-[var(--primary)] shadow-xs' : 'bg-transparent border-transparent hover:bg-[var(--secondary)]/60'
+        card.draggable = true;
+        card.className = `w-full text-left p-2.5 rounded-xl border transition-all cursor-pointer relative overflow-hidden ${
+          isCurrent ? 'bg-[var(--secondary)] border-[var(--primary)] shadow-xs' : 'bg-[var(--card)]/50 border-[var(--border)]/50 hover:bg-[var(--secondary)]/60'
         }`;
         card.innerHTML = `
-          <div class="flex items-center justify-between gap-1">
+          <span class="absolute left-0 top-0 bottom-0 w-1" style="background:${subjObj.color || '#94A3B8'};"></span>
+          <div class="pl-1.5 flex items-center justify-between gap-1">
             <div class="font-semibold text-xs text-[var(--foreground)] truncate flex-1">${meta.title}</div>
-            <button type="button" data-del-note="${noteId}" class="px-1.5 py-0.5 rounded hover:bg-red-500/20 text-[var(--muted-foreground)] hover:text-red-400 text-[10px]" title="刪除此筆記">🗑️</button>
+            <span class="text-[10px] font-mono text-[var(--muted-foreground)] shrink-0">${meta.pages ? `${meta.pages.length}頁` : ''}</span>
+            <button type="button" data-del-note="${noteId}" class="px-1 py-0.5 rounded hover:bg-red-500/20 text-[var(--muted-foreground)] hover:text-red-400 text-[10px]" title="刪除此筆記">🗑️</button>
           </div>
-          <div class="flex items-center justify-between mt-1.5 gap-1">
+          <div class="pl-1.5 flex items-center justify-between mt-1.5 gap-1">
             <div class="flex items-center gap-1 min-w-0">
               ${storageTag}
-              <select data-move-note="${noteId}" class="bg-[var(--card)] text-[10px] text-[var(--muted-foreground)] border border-[var(--border)] rounded px-1 py-0.5 max-w-[105px] truncate" title="將筆記歸檔至分類項目">
-                ${subjectsDB.map(s => `<option value="${s.id}" ${(meta.subjectId || 'subj_uncat') === s.id ? 'selected' : ''}>${s.name}</option>`).join('')}
+              <select data-move-note="${noteId}" class="bg-[var(--card)] text-[10px] text-[var(--foreground)] border border-[var(--border)] rounded px-1.5 py-0.5 max-w-[125px] truncate" title="將筆記歸檔至 Notability 主題">
+                ${subjectsDB.map(s => `<option value="${s.id}" ${(meta.subjectId || 'subj_uncat') === s.id ? 'selected' : ''}>● ${s.name}</option>`).join('')}
               </select>
             </div>
             <span class="text-[10px] text-[var(--muted-foreground)] shrink-0">${daysAgo <= 0 ? '今天' : `${daysAgo}天前`}</span>
           </div>
         `;
+
+        card.addEventListener('dragstart', (ev) => {
+          ev.dataTransfer?.setData('text/inkflow-note-id', noteId);
+        });
 
         card.addEventListener('click', (ev) => {
           if (ev.target.closest('select') || ev.target.closest('[data-del-note]')) return;
@@ -3326,13 +3743,7 @@
         if (moveSelect) {
           moveSelect.addEventListener('change', (ev) => {
             ev.stopPropagation();
-            const targetSubj = ev.target.value;
-            if (cloudDriveDB[noteId]) cloudDriveDB[noteId].subjectId = targetSubj;
-            if (ipadLocalDB[noteId]) ipadLocalDB[noteId].subjectId = targetSubj;
-            saveDatabases();
-            renderSidebarCatalog();
-            const sName = subjectsDB.find(s => s.id === targetSubj)?.name || '分類';
-            showToast('📁', '已歸檔筆記', `「${meta.title}」已移至「${sName}」`);
+            moveNoteToSubject(noteId, ev.target.value);
           });
         }
 
@@ -3502,20 +3913,71 @@
       renderActivePage();
     });
 
-    // New Subject (Category) Creation
+    // Notability Divider (分隔條) & Subject (彩色主題) Creator Wiring
     document.getElementById('btn-new-subject')?.addEventListener('click', () => {
-      const name = prompt('請輸入新分類項目名稱（例如：📘 線性代數、🧪 物理實驗）：', '');
-      if (!name || !name.trim()) return;
-      const newSubj = {
-        id: `subj_${Date.now()}`,
-        name: name.trim().startsWith('📁') || [...name.trim()][0].codePointAt(0) > 255 ? name.trim() : `📁 ${name.trim()}`,
-        color: '#3B82F6'
-      };
-      subjectsDB.push(newSubj);
-      saveSubjectsDB();
-      state.selectedSubjectFilter = newSubj.id;
-      renderSidebarCatalog();
-      showToast('📁', `已建立新分類項目「${newSubj.name}」`, '可將任何筆記歸檔至此分類項目中！');
+      openSubjectOrDividerCreator('subject');
+    });
+
+    document.getElementById('btn-new-divider')?.addEventListener('click', () => {
+      openSubjectOrDividerCreator('divider');
+    });
+
+    document.getElementById('btn-cancel-creator')?.addEventListener('click', () => {
+      document.getElementById('subject-creator-box')?.classList.add('hidden');
+    });
+
+    document.querySelectorAll('#subj-color-picker [data-subj-color]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        state.creatorSelectedColor = btn.dataset.subjColor;
+        document.querySelectorAll('#subj-color-picker [data-subj-color]').forEach(b => {
+          b.classList.remove('ring-2', 'ring-white', 'scale-110');
+          b.classList.add('opacity-75');
+        });
+        btn.classList.remove('opacity-75');
+        btn.classList.add('ring-2', 'ring-white', 'scale-110');
+      });
+    });
+
+    const handleConfirmCreator = () => {
+      const input = document.getElementById('input-new-subj-name');
+      const divSelect = document.getElementById('select-new-subj-divider');
+      const rawName = (input?.value || '').trim();
+      if (!rawName) return;
+
+      if (state.creatorMode === 'divider') {
+        const newDiv = {
+          id: `div_${Date.now()}`,
+          name: rawName,
+          collapsed: false
+        };
+        dividersDB.push(newDiv);
+        saveDividersDB();
+        document.getElementById('subject-creator-box')?.classList.add('hidden');
+        renderSidebarCatalog();
+        showToast('📂', `已建立新分隔條「${newDiv.name}」`, '可點分隔條右側「＋」在底下新增彩色主題！');
+      } else {
+        const targetDivId = divSelect?.value || dividersDB[0]?.id || null;
+        const newSubj = {
+          id: `subj_${Date.now()}`,
+          name: rawName,
+          color: state.creatorSelectedColor || '#3B82F6',
+          dividerId: targetDivId
+        };
+        subjectsDB.push(newSubj);
+        saveSubjectsDB();
+        state.selectedSubjectFilter = newSubj.id;
+        document.getElementById('subject-creator-box')?.classList.add('hidden');
+        renderSidebarCatalog();
+        showToast('🎨', `已建立新主題「${newSubj.name}」`, '已切換至此主題，點「+ 新筆記」或匯入 .note 會直接歸入此主題！');
+      }
+    };
+
+    document.getElementById('btn-confirm-creator')?.addEventListener('click', handleConfirmCreator);
+    document.getElementById('input-new-subj-name')?.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        handleConfirmCreator();
+      }
     });
 
     document.getElementById('current-note-subject')?.addEventListener('change', (e) => {
@@ -3523,8 +3985,8 @@
       if (!note) return;
       note.subjectId = e.target.value;
       commitActiveNoteChange();
-      const sName = subjectsDB.find(s => s.id === e.target.value)?.name || '分類';
-      showToast('📁', '已更新筆記分類', `「${note.title}」已歸檔至「${sName}」`);
+      const sName = subjectsDB.find(s => s.id === e.target.value)?.name || '未分類';
+      showToast('🗂️', '已更新筆記主題', `「${note.title}」已歸檔至「${sName}」`);
     });
 
     // Core Tools & Eraser Options Popover Wiring
@@ -3759,7 +4221,7 @@
 
     document.getElementById('btn-new-note').addEventListener('click', () => {
       const id = `note_${Date.now()}`;
-      const targetSubject = (state.selectedSubjectFilter && state.selectedSubjectFilter !== 'all')
+      const targetSubject = (state.selectedSubjectFilter && !['all', 'recent'].includes(state.selectedSubjectFilter))
         ? state.selectedSubjectFilter
         : 'subj_math';
       const newNote = {
